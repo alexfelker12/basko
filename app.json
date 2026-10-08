@@ -7,22 +7,78 @@
     "scheme": "basko",
     "userInterfaceStyle": "automatic",
     "android": {
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.alexfelker.digilist",
+      "softwareKeyboardLayoutMode": "pan",
+      "permissions": [
+        "android.permission.CHANGE_WIFI_MULTICAST_STATE",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.CHANGE_WIFI_STATE",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            {
+              "scheme": "file",
+              "mimeType": "application/x-digilist"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/x-digilist"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "application/octet-stream",
+              "pathPattern": ".*\\.digilist"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/octet-stream",
+              "pathPattern": ".*\\.digilist"
+            }
+          ]
+        }
+      ]
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "Digi List",
+            "CFBundleTypeRole": "Viewer",
+            "LSItemContentTypes": ["com.alexfelker.digilist.list"]
+          }
+        ],
+        "UTImportedTypeDeclarations": [
+          {
+            "UTTypeIdentifier": "com.alexfelker.digilist.list",
+            "UTTypeDescription": "Digi List",
+            "UTTypeConformsTo": ["public.data"],
+            "UTTypeTagSpecification": {
+              "public.filename-extension": ["digilist"]
+            }
+          }
+        ]
+      }
     },
     "web": {
       "output": "static"
     },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {}
-      ],
-      "expo-secure-store"
-    ],
+    "plugins": ["expo-router", ["expo-splash-screen", {}], "expo-secure-store"],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "71ee0bc0-63b7-4e5a-b817-2119f6ae04ee"
+      }
+    },
+    "owner": "alexfelker"
   }
 }
