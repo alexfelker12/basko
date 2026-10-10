@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "android": {
       "predictiveBackGestureEnabled": false,
-      "package": "com.alexfelker.digilist",
+      "package": "com.alexfelker.basko",
       "softwareKeyboardLayoutMode": "pan",
       "permissions": [
         "android.permission.CHANGE_WIFI_MULTICAST_STATE",
@@ -19,25 +19,28 @@
       "intentFilters": [
         {
           "action": "VIEW",
-          "category": ["DEFAULT", "BROWSABLE"],
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ],
           "data": [
             {
               "scheme": "file",
-              "mimeType": "application/x-digilist"
+              "mimeType": "application/x-basko"
             },
             {
               "scheme": "content",
-              "mimeType": "application/x-digilist"
+              "mimeType": "application/x-basko"
             },
             {
               "scheme": "file",
               "mimeType": "application/octet-stream",
-              "pathPattern": ".*\\.digilist"
+              "pathPattern": ".*\\.basko"
             },
             {
               "scheme": "content",
               "mimeType": "application/octet-stream",
-              "pathPattern": ".*\\.digilist"
+              "pathPattern": ".*\\.basko"
             }
           ]
         }
@@ -50,16 +53,22 @@
           {
             "CFBundleTypeName": "Digi List",
             "CFBundleTypeRole": "Viewer",
-            "LSItemContentTypes": ["com.alexfelker.digilist.list"]
+            "LSItemContentTypes": [
+              "com.alexfelker.basko.list"
+            ]
           }
         ],
         "UTImportedTypeDeclarations": [
           {
-            "UTTypeIdentifier": "com.alexfelker.digilist.list",
+            "UTTypeIdentifier": "com.alexfelker.basko.list",
             "UTTypeDescription": "Digi List",
-            "UTTypeConformsTo": ["public.data"],
+            "UTTypeConformsTo": [
+              "public.data"
+            ],
             "UTTypeTagSpecification": {
-              "public.filename-extension": ["digilist"]
+              "public.filename-extension": [
+                "basko"
+              ]
             }
           }
         ]
@@ -68,7 +77,12 @@
     "web": {
       "output": "static"
     },
-    "plugins": ["expo-router", ["expo-splash-screen", {}], "expo-secure-store"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      "expo-sharing"
+    ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
