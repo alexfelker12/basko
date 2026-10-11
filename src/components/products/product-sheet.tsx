@@ -25,17 +25,19 @@ interface ProductSheetProps {
   onClosed?: () => void;
   /** Neu angelegt – liefert das Produkt, z. B. für das Hinzufügen-Sheet (3d). */
   onCreated?: (product: CatalogProduct) => void;
+  /** Android-Zurück: zum vorigen Sheet (z. B. Suche 3c) statt schließen. */
+  onBack?: () => void;
 }
 
 /**
  * Neues Produkt (4d) bzw. Produkt bearbeiten (gleiches Sheet mit „Speichern“).
  * Gespeichert wird erst mit dem Knopf; Wegwischen verwirft (auch neu gewählte Fotos).
  */
-export function ProductSheet({ state, onClose, onClosed, onCreated }: ProductSheetProps) {
+export function ProductSheet({ state, onClose, onClosed, onCreated, onBack }: ProductSheetProps) {
   const shown = useLastDefined(state);
 
   return (
-    <Sheet isOpen={state !== null} onDismiss={onClose} onClosed={onClosed}>
+    <Sheet isOpen={state !== null} onDismiss={onClose} onClosed={onClosed} onBack={onBack}>
       {shown ? (
         <ProductForm
           key={shown.kind === "edit" ? shown.product.id : `new:${shown.name ?? ""}`}

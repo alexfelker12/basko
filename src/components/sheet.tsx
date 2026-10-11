@@ -1,5 +1,6 @@
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import { useEffect, useRef, type ReactNode } from "react";
+import { BackHandler } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
@@ -21,12 +22,17 @@ function SheetBackdrop(props: BottomSheetBackdropProps) {
 interface SheetProps {
   isOpen: boolean;
   /**
-   * Nur wenn die Nutzerin das Sheet selbst schließt (Wischen, Tipp daneben, Zurück) –
+   * Nur wenn die Nutzerin das Sheet selbst schließt (Wischen, Tipp daneben, Android-Zurück) –
    * der Aufrufer setzt dann seinen Zustand auf „zu“. Nicht bei `isOpen = false`.
    */
   onDismiss: () => void;
   /** Nach jeder abgeschlossenen Schließ-Animation, z. B. um das nächste Sheet zu öffnen. */
   onClosed?: () => void;
+  /**
+   * Android-Zurück führt zu einem vorigen Sheet statt zu schließen (z. B. Hinzufügen 3e → Suche 3c).
+   * Ohne `onBack` schließt Zurück dieses Sheet wie Wischen.
+   */
+  onBack?: () => void;
   /** 90 % Höhe mit scrollbarem Inhalt (z. B. `BottomSheetScrollView`) statt Höhe nach Inhalt. */
   fullHeight?: boolean;
   children: ReactNode;
@@ -36,11 +42,19 @@ interface SheetProps {
  * Sheet mit Griff auf Basis des gluestack BottomSheet (@gorhom/bottom-sheet), gesteuert über `isOpen`.
  * Eingabefelder darin heben das Sheet über die Tastatur (`useSheetKeyboardHandlers`).
  */
-export function Sheet({ isOpen, onDismiss, onClosed, fullHeight = false, children }: SheetProps) {
+export function Sheet({
+  isOpen,
+  onDismiss,
+  onClosed,
+  onBack,
+  fullHeight = false,
+  children,
+}: SheetProps) {
   const ref = useRef<BottomSheetRef>(null);
   const isOpenRef = useRef(isOpen);
   const onDismissRef = useRef(onDismiss);
   const onClosedRef = useRef(onClosed);
+  const onBackRef = useRef(onBack);
   const { top } = useSafeAreaInsets();
 
   // Immer die aktuellen Werte – gorhom ruft den Schließ-Callback erst nach der Animation auf
@@ -48,11 +62,25 @@ export function Sheet({ isOpen, onDismiss, onClosed, fullHeight = false, childre
     isOpenRef.current = isOpen;
     onDismissRef.current = onDismiss;
     onClosedRef.current = onClosed;
+    onBackRef.current = onBack;
   });
 
   useEffect(() => {
     if (isOpen) ref.current?.open();
     else ref.current?.close();
+  }, [isOpen]);
+
+  // Android-Zurück schließt nur dieses Sheet (wie Wischen) bzw. geht mit `onBack` einen Schritt
+  // zurück. Der zuletzt angemeldete Handler kommt zuerst dran – bei verschachtelten Sheets also
+  // das obere, das untere bleibt offen. Ohne das schloss Zurück den Screen oder die App.
+  useEffect(() => {
+    if (!isOpen) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (onBackRef.current) onBackRef.current();
+      else ref.current?.close();
+      return true;
+    });
+    return () => subscription.remove();
   }, [isOpen]);
 
   const handleClosed = () => {
