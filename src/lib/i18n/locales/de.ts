@@ -52,6 +52,7 @@ const de = {
   newList: {
     title: "Neue Liste",
     nameLabel: "Name",
+    previewName: "Name der Liste",
   },
   listColor: {
     title: "Listenfarbe",
