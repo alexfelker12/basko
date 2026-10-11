@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { XIcon } from "lucide-react-native";
-import { useState } from "react";
-import { Pressable, View, type LayoutChangeEvent } from "react-native";
+import { Pressable, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/ui/icon";
 import { ImageViewer, ImageViewerContent, useImageViewer } from "@/components/ui/image-viewer";
@@ -11,7 +11,12 @@ import { t } from "@/lib/i18n";
 import { productImageUri } from "@/lib/images";
 import { cn } from "@gluestack-ui/utils/nativewind-utils";
 
-/** Abstand zwischen Bildfläche und Kopf bzw. Fuß. */
+/**
+ * Feste Grenzen der Bildfläche: Kopf `h-15` (60) und Fuß `h-16` (64), jeweils plus Safe Area und
+ * 8 Abstand. Das Bild wird darin eingepasst (contain); Zoomen geht immer.
+ */
+const HEADER_HEIGHT = 60;
+const FOOTER_HEIGHT = 64;
 const CHROME_GAP = 8;
 
 interface PhotoViewerProps {
@@ -29,8 +34,7 @@ interface PhotoViewerProps {
  * Wird bei jedem Öffnen neu eingehängt, damit `initialIndex` greift.
  */
 export function PhotoViewer({ title, uris, initialIndex = 0, isOpen, onClose }: PhotoViewerProps) {
-  // Höhe von Kopf und Fuß (inkl. Safe Area) – die Bildfläche liegt dazwischen und ragt nicht hinein
-  const [chrome, setChrome] = useState({ top: 0, bottom: 0 });
+  const insets = useSafeAreaInsets();
 
   if (!isOpen || uris.length === 0) return null;
 
@@ -44,43 +48,23 @@ export function PhotoViewer({ title, uris, initialIndex = 0, isOpen, onClose }: 
       }}
     >
       <ImageViewerContent
-        insetTop={chrome.top + CHROME_GAP}
-        insetBottom={chrome.bottom + CHROME_GAP}
+        insetTop={insets.top + HEADER_HEIGHT + CHROME_GAP}
+        insetBottom={insets.bottom + FOOTER_HEIGHT + CHROME_GAP}
       >
         <StatusBar style="light" />
-        <ViewerChrome
-          title={title}
-          onHeaderLayout={(event) =>
-            setChrome((current) => ({ ...current, top: event.nativeEvent.layout.height }))
-          }
-          onFooterLayout={(event) =>
-            setChrome((current) => ({ ...current, bottom: event.nativeEvent.layout.height }))
-          }
-        />
+        <ViewerChrome title={title} />
       </ImageViewerContent>
     </ImageViewer>
   );
 }
 
 /** Kopf (✕, Name, Zähler) und Fuß (Punkte, Hinweis) über dem Bild. */
-function ViewerChrome({
-  title,
-  onHeaderLayout,
-  onFooterLayout,
-}: {
-  title: string;
-  onHeaderLayout: (event: LayoutChangeEvent) => void;
-  onFooterLayout: (event: LayoutChangeEvent) => void;
-}) {
+function ViewerChrome({ title }: { title: string }) {
   const { currentIndex, images, close } = useImageViewer();
 
   return (
     <>
-      <View
-        className="absolute left-0 right-0 top-0 pt-safe"
-        pointerEvents="box-none"
-        onLayout={onHeaderLayout}
-      >
+      <View className="absolute left-0 right-0 top-0 pt-safe" pointerEvents="box-none">
         <View className="h-15 flex-row items-center gap-3 px-page">
           <Pressable
             onPress={close}
@@ -101,12 +85,8 @@ function ViewerChrome({
         </View>
       </View>
 
-      <View
-        className="absolute bottom-0 left-0 right-0 pb-safe"
-        pointerEvents="none"
-        onLayout={onFooterLayout}
-      >
-        <View className="items-center gap-3 pb-6">
+      <View className="absolute bottom-0 left-0 right-0 pb-safe" pointerEvents="none">
+        <View className="h-16 items-center justify-end gap-3 pb-6">
           {images.length > 1 ? (
             <View className="flex-row gap-1.5">
               {images.map((image, index) => (
