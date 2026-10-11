@@ -84,23 +84,23 @@ export default function ProductsScreen() {
     onMorePress: () => setMenuProduct(match.product),
   });
 
+  // Leer-Inhalt ohne eigenen Seitenabstand: Die Liste (4a) hat keinen, das Raster (4b) trägt
+  // `px-page` schon am Inhalt – so sitzt „neu anlegen“ in beiden Ansichten gleich.
   const noResults = trimmed ? (
-    <View className="px-page pt-4">
-      <Pressable
-        onPress={() => setSheet({ kind: "create", name: trimmed })}
-        role="button"
-        className="flex-row items-center gap-3 border-b border-line py-3 active:opacity-70"
-      >
-        <View className="size-8 items-center justify-center rounded-[999px] bg-chip">
-          <Icon as={PlusIcon} size="md" className="text-ink" />
-        </View>
-        <Text className="flex-1 text-base font-bold text-primary">
-          {t("search.create", { name: trimmed })}
-        </Text>
-      </Pressable>
-    </View>
+    <Pressable
+      onPress={() => setSheet({ kind: "create", name: trimmed })}
+      role="button"
+      className="flex-row items-center gap-3 border-b border-line py-3 active:opacity-70"
+    >
+      <View className="size-8 items-center justify-center rounded-[999px] bg-chip">
+        <Icon as={PlusIcon} size="md" className="text-ink" />
+      </View>
+      <Text className="flex-1 text-base font-bold text-primary">
+        {t("search.create", { name: trimmed })}
+      </Text>
+    </Pressable>
   ) : (
-    <Text className="px-page pt-6 text-center text-sm text-soft">
+    <Text className="pt-2 text-center text-sm text-soft">
       {t("products.noneInCategory", {
         name: categories.find((category) => category.id === activeFilterId)?.name ?? "",
       })}
@@ -143,7 +143,7 @@ export default function ProductsScreen() {
           keyboardDismissMode="on-drag"
           contentContainerClassName="gap-4 px-page pb-40 pt-1.5"
           columnWrapperClassName="gap-3"
-          ListEmptyComponent={isPending ? null : noResults}
+          ListEmptyComponent={isPending ? null : <View className="pt-2.5">{noResults}</View>}
           renderItem={({ item }) => (
             <View className="flex-1">
               {item ? (
@@ -166,7 +166,7 @@ export default function ProductsScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           contentContainerClassName="pb-40"
-          ListEmptyComponent={isPending ? null : noResults}
+          ListEmptyComponent={isPending ? null : <View className="px-page pt-4">{noResults}</View>}
           renderItem={({ item }) => <ProductRow {...itemProps(item)} />}
         />
       )}

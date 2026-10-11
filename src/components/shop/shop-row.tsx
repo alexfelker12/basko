@@ -48,7 +48,7 @@ export function ShopRow({ item, onToggle, onShowImage }: ShopRowProps) {
         <Text className={cn("text-base font-bold", item.checked && "line-through")}>
           {item.productName}
         </Text>
-        {item.note ? <Text className="mt-0.5 text-sm text-soft">{item.note}</Text> : null}
+        {item.note ? <Text className="text-sm text-soft">{item.note}</Text> : null}
       </View>
       <QuantityChip label={formatQuantityWithUnit(item.quantity, item.unit)} dimmed={item.checked} />
     </Pressable>
