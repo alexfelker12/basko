@@ -1,6 +1,6 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { PlusIcon, SettingsIcon, ShoppingCartIcon, Trash2Icon } from "lucide-react-native";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Keyboard, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { LinearTransition } from "react-native-reanimated";
@@ -14,8 +14,10 @@ import { ScreenHeader } from "@/components/screen-header";
 import { SWIPE_ACTION_WIDTH, SwipeRow } from "@/components/swipe-row";
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { StyledAnimatedView } from "@/components/ui/utils/animated";
+import { useAppToast } from "@/hooks/use-app-toast";
 import { useScrollFocusedInputIntoView } from "@/hooks/use-keyboard";
 import { useCreateList, useDuplicateList, useLists, useRenameList } from "@/hooks/use-lists";
+import { useExportList } from "@/hooks/use-transfer";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { hapticTap } from "@/lib/haptics";
 import { t } from "@/lib/i18n";
@@ -25,11 +27,15 @@ import type { ListFormValues } from "@/lib/validation";
 /** Listen-Übersicht (1a–1g), Start-Tab. */
 export default function ListsScreen() {
   const router = useRouter();
+  const showToast = useAppToast();
+  /** Aus dem Transfer-Verlauf (6a): „···“-Menü dieser Liste öffnen. */
+  const { menu: menuParam } = useLocalSearchParams<{ menu?: string }>();
   const { data: lists = [], isPending } = useLists();
   const createList = useCreateList();
   const renameList = useRenameList();
   const duplicateList = useDuplicateList();
   const deleteWithUndo = useUndoableDelete();
+  const exportList = useExportList();
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [menuList, setMenuList] = useState<ListSummary | null>(null);
@@ -41,6 +47,22 @@ export default function ListsScreen() {
   useScrollFocusedInputIntoView(renamingId !== null, (dy) =>
     scrollRef.current?.scrollTo({ y: scrollOffset.current + dy, animated: true })
   );
+
+  // Den Parameter einmal auswerten (sobald die Listen geladen sind), danach aus der Route entfernen
+  const [handledMenuParam, setHandledMenuParam] = useState<string | null>(null);
+  if (menuParam && menuParam !== handledMenuParam && !isPending) {
+    setHandledMenuParam(menuParam);
+    const list = lists.find((item) => item.id === menuParam);
+    if (list) {
+      setRenamingId(null);
+      setMenuList(list);
+    }
+  } else if (!menuParam && handledMenuParam) {
+    setHandledMenuParam(null);
+  }
+  useEffect(() => {
+    if (menuParam && menuParam === handledMenuParam) router.setParams({ menu: undefined });
+  }, [menuParam, handledMenuParam, router]);
 
   const deleteList = (list: ListSummary) =>
     deleteWithUndo({
@@ -158,6 +180,17 @@ export default function ListsScreen() {
           router.push({ pathname: "/list/[id]/edit", params: { id: list.id } })
         )}
         onRename={closeMenuThen((list) => setRenamingId(list.id))}
+        onSend={closeMenuThen((list) =>
+          router.push({ pathname: "/transfer/send/[listId]", params: { listId: list.id } })
+        )}
+        onExport={closeMenuThen((list) =>
+          exportList.mutate(list.id, {
+            onError: (error) => {
+              console.warn("[transfer] export", error);
+              showToast({ title: t("errors.generic") });
+            },
+          })
+        )}
         onDuplicate={closeMenuThen((list) => duplicateList.mutate(list.id))}
         onDelete={closeMenuThen(deleteList)}
       />

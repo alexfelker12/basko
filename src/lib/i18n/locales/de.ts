@@ -198,6 +198,113 @@ const de = {
   },
   transfer: {
     title: "Transfer",
+    receiveCard: {
+      title: "Auf Empfang warten",
+      text: "Sichtbar für Geräte im selben Netzwerk",
+    },
+    history: "Verlauf",
+    clearHistory: "Verlauf leeren",
+    historyEntry: {
+      sent: "gesendet an {peer} · {date}",
+      received: "von {peer} · {date}",
+      exported: "als Datei exportiert · {date}",
+      imported: "aus Datei importiert · {date}",
+    },
+    historyDirection: {
+      in: "Empfangen",
+      out: "Gesendet",
+    },
+    listMissing: "{name} existiert nicht mehr",
+    today: "heute",
+    yesterday: "gestern",
+    weekdays: {
+      sun: "So",
+      mon: "Mo",
+      tue: "Di",
+      wed: "Mi",
+      thu: "Do",
+      fri: "Fr",
+      sat: "Sa",
+    },
+    status: {
+      ready: "Bereit",
+      idle: "Nicht auf Empfang",
+      busy: "Beschäftigt",
+    },
+    notReadyHint: "Auf dem Gerät Transfer → Auf Empfang warten öffnen",
+    fileUnreadable: "Datei konnte nicht gelesen werden",
+  },
+  sendList: {
+    title: "Gerät wählen",
+    subtitle: "„{name}“ senden an …",
+    rescan: "Erneut suchen",
+    searching: "Suche nach Geräten …",
+    empty: {
+      title: "Keine Geräte gefunden",
+      text: "Öffne auf dem anderen Gerät Transfer → Auf Empfang warten.",
+    },
+    waiting: {
+      title: "Warte auf Bestätigung",
+      text: "{device} muss die Anfrage annehmen.",
+    },
+    sent: {
+      title: "Gesendet",
+      text: "„{name}“ ist auf {device} angekommen.",
+    },
+    failed: {
+      title: "Nicht angekommen",
+      text: "{device} hat nicht geantwortet. Sind beide Geräte im selben WLAN?",
+    },
+    rejected: {
+      title: "Abgelehnt",
+      text: "{device} hat abgelehnt.",
+    },
+    busy: {
+      title: "Gerät beschäftigt",
+      text: "{device} empfängt oder sendet gerade eine andere Liste. Versuche es gleich noch einmal.",
+    },
+    retry: "Erneut versuchen",
+  },
+  receive: {
+    title: "Sichtbar im Netzwerk",
+    seenAs: "Andere Geräte sehen dich als",
+    receiving: {
+      title: "Liste wird empfangen …",
+      text: "„{name}“ von {device}",
+    },
+    request: {
+      title: "{device} möchte dir „{name}“ senden",
+      accept: "Annehmen",
+      reject: "Ablehnen",
+    },
+    withdrawn: "Anfrage zurückgezogen",
+    failed: "Übertragung abgebrochen",
+  },
+  importList: {
+    title: "Liste importieren?",
+    fromDevice: "von {device}",
+    fromFile: "aus Datei",
+    conflict: "Konflikt",
+    discard: "Verwerfen",
+    accept: "Übernehmen",
+  },
+  importConflicts: {
+    title: "Produkt-Konflikte",
+    text: {
+      one: "{count} Produkt gibt es bei dir schon mit anderen Angaben.",
+      other: "{count} Produkte gibt es bei dir schon mit anderen Angaben.",
+    },
+    keepAll: "Alle behalten",
+    overwriteAll: "Alle überschreiben",
+    local: "Bei dir: {details}",
+    incoming: "Neu: {details}",
+    keep: "Behalten",
+    overwrite: "Überschreiben",
+    save: "Liste speichern",
+  },
+  importSaved: {
+    title: "Liste gespeichert",
+    text: "„{name}“ findest du jetzt unter Listen.",
   },
   recipes: {
     title: "Rezepte",

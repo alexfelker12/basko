@@ -7,6 +7,8 @@ import { AlertDialog, AlertDialogBackdrop, AlertDialogContent } from "@/componen
 interface DialogProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Tipp daneben schließt den Dialog (Standard). Zurück schließt immer. */
+  closeOnOverlayClick?: boolean;
   children: ReactNode;
 }
 
@@ -15,9 +17,14 @@ interface DialogProps {
  * oben ein Platzhalter in Höhe des Safe-Area-Insets, unten einer in Tastaturhöhe.
  * Der Inhalt wird bei jedem Öffnen neu eingehängt (frische Formulare).
  */
-export function Dialog({ isOpen, onClose, children }: DialogProps) {
+export function Dialog({ isOpen, onClose, closeOnOverlayClick = true, children }: DialogProps) {
   return (
-    <AlertDialog isOpen={isOpen} onClose={onClose} size="lg">
+    <AlertDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      closeOnOverlayClick={closeOnOverlayClick}
+      size="lg"
+    >
       <AlertDialogBackdrop />
       <View className="pt-safe" />
       {isOpen ? <AlertDialogContent>{children}</AlertDialogContent> : null}
