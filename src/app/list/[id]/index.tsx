@@ -7,6 +7,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { FadeIn, FadeOut, LinearTransition } from "react-native-reanimated";
 
 import { EmptyState } from "@/components/empty-state";
+import { ProductPhotoViewer } from "@/components/image-viewer";
 import { ItemForm } from "@/components/items/item-form";
 import { SectionHeader } from "@/components/section-header";
 import { Sheet } from "@/components/sheet";
@@ -59,6 +60,7 @@ export default function ShopScreen() {
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [quickEdit, setQuickEdit] = useState<ListItemRow | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
+  const [viewerItem, setViewerItem] = useState<ListItemRow | null>(null);
   const shownQuickEdit = useLastDefined(quickEdit);
 
   // Einkaufsmodus öffnen zählt als Benutzung der Liste
@@ -140,7 +142,11 @@ export default function ShopScreen() {
             actionWidth={SWIPE_ACTION_WIDTH.edit}
             onAction={() => setQuickEdit(item)}
           >
-            <ShopRow item={item} onToggle={() => toggle(item)} />
+            <ShopRow
+              item={item}
+              onToggle={() => toggle(item)}
+              onShowImage={() => setViewerItem(item)}
+            />
           </SwipeRow>
         </StyledAnimatedView>
       );
@@ -206,6 +212,11 @@ export default function ShopScreen() {
           />
         ) : null}
       </Sheet>
+
+      <ProductPhotoViewer
+        product={viewerItem ? { id: viewerItem.productId, name: viewerItem.productName } : null}
+        onClose={() => setViewerItem(null)}
+      />
 
       {/* „Alle Haken entfernen?“ (Zurücksetzen im Header) */}
       <Dialog isOpen={resetOpen} onClose={() => setResetOpen(false)}>

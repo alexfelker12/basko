@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { LIST_ITEM_NOTE_MAX } from "@/lib/db/schema";
+import {
+  CATEGORY_NAME_MAX,
+  LIST_ITEM_NOTE_MAX,
+  PRODUCT_IMAGES_MAX,
+  PRODUCT_NAME_MAX,
+} from "@/lib/db/schema";
 import { LIST_COLORS } from "@/lib/list-colors";
 import { roundQuantity, UNITS } from "@/lib/units";
 
@@ -32,3 +37,24 @@ export const itemFormSchema = z.object({
 });
 
 export type ItemFormValues = z.input<typeof itemFormSchema>;
+
+/**
+ * Produkt (4d): Name max. 100 Zeichen, Kategorie Pflicht, max. 8 Fotos. Leere Namen grauen nur den
+ * Knopf aus (ohne Text); „gibt es schon“ prüft das Formular gegen den Katalog.
+ */
+export const productFormSchema = z.object({
+  name: z.string().trim().min(1, "").max(PRODUCT_NAME_MAX),
+  categoryId: z.string().min(1, ""),
+  photos: z
+    .array(z.object({ key: z.string(), uri: z.string(), fileName: z.string().nullable() }))
+    .max(PRODUCT_IMAGES_MAX),
+});
+
+export type ProductFormValues = z.input<typeof productFormSchema>;
+
+/** Kategorie (5a Umbenennen, 5c Neu): Name nicht leer, max. 40 Zeichen, eindeutig (prüft das Formular). */
+export const categoryFormSchema = z.object({
+  name: z.string().trim().min(1, "").max(CATEGORY_NAME_MAX),
+});
+
+export type CategoryFormValues = z.input<typeof categoryFormSchema>;

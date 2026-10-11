@@ -3,6 +3,8 @@ import { PlusIcon, SearchIcon } from "lucide-react-native";
 import { useMemo } from "react";
 import { Pressable, View } from "react-native";
 
+import { HighlightedText } from "@/components/highlighted-text";
+import { KeyboardSpacer } from "@/components/keyboard-spacer";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
@@ -12,7 +14,6 @@ import { useSheetKeyboardHandlers } from "@/hooks/use-sheet-keyboard";
 import { PRODUCT_NAME_MAX } from "@/lib/db/schema";
 import { t } from "@/lib/i18n";
 import { searchProducts, type ProductSearchResult } from "@/lib/product-search";
-import { cn } from "@gluestack-ui/utils/nativewind-utils";
 
 interface ProductSearchProps {
   query: string;
@@ -88,6 +89,8 @@ export function ProductSearch({
             </View>
           ) : null}
         </View>
+        {/* Das hohe Sheet bleibt bei offener Tastatur stehen – Platz, um bis ans Ende zu scrollen */}
+        <KeyboardSpacer />
       </BottomSheetScrollView>
     </View>
   );
@@ -100,16 +103,7 @@ function ResultRow({ result, onPress }: { result: ProductSearchResult; onPress: 
       className="flex-row items-center gap-3 border-b border-line py-3 active:opacity-70"
     >
       <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="text-base font-bold">
-          {result.parts.map((part, index) => (
-            <Text
-              key={index}
-              className={cn("text-base", part.match ? "font-extrabold text-primary" : "font-bold")}
-            >
-              {part.text}
-            </Text>
-          ))}
-        </Text>
+        <HighlightedText parts={result.parts} className="text-base font-bold" />
         <Text numberOfLines={1} className="text-xs text-soft">
           {result.product.categoryName}
         </Text>

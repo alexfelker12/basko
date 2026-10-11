@@ -10,7 +10,6 @@ import {
 } from "react";
 import { useWindowDimensions, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
 import {
   FadeInDown,
   FadeOutDown,
@@ -26,6 +25,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { Icon } from "@/components/ui/icon";
 import { Toast, ToastAction, ToastTitle } from "@/components/ui/toast";
 import { StyledAnimatedView } from "@/components/ui/utils/animated";
+import { useKeyboardHeight } from "@/hooks/use-keyboard";
 
 const DEFAULT_DURATION = 2500;
 /** Nach dem Loslassen bleibt ein angefasster Toast noch mindestens so lange stehen. */
@@ -139,7 +139,7 @@ export function AppToastProvider({ children }: { children: ReactNode }) {
     [schedule]
   );
 
-  const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
+  const { height: keyboardHeight } = useKeyboardHeight();
   // keyboardHeight ist ≤ 0 (−Tastaturhöhe): erst anheben, wenn die Tastatur bis an den Toast reicht
   const liftStyle = useAnimatedStyle(() => ({
     transform: [

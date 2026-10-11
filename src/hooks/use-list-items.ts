@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import {
   addListItem,
-  addNewProductToList,
   getListItems,
   resetListChecks,
   setListItemChecked,
@@ -31,13 +30,6 @@ export function useAddListItem() {
   return useItemMutation(
     ({ listId, productId, values }: { listId: string; productId: string; values: ItemValues }) =>
       addListItem(listId, productId, values)
-  );
-}
-
-export function useAddNewProductToList() {
-  return useItemMutation(
-    ({ listId, name, values }: { listId: string; name: string; values: ItemValues }) =>
-      addNewProductToList(listId, name, values)
   );
 }
 

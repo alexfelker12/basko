@@ -67,9 +67,12 @@ export function Sheet({ isOpen, onDismiss, onClosed, fullHeight = false, childre
         snapPoints={fullHeight ? FULL_HEIGHT_SNAP_POINTS : undefined}
         enableDynamicSizing={!fullHeight}
         topInset={top}
-        keyboardBehavior="interactive"
+        // Das Fenster ändert sich mit der Tastatur nicht (siehe `useResizeMode` in `RootLayout`),
+        // daher verschiebt gorhom das Sheet selbst – auf Android über den „adjustPan“-Weg.
+        // Hohe Sheets bleiben stehen (`extend`), ihr Inhalt bekommt unten einen `KeyboardSpacer`.
+        keyboardBehavior={fullHeight ? "extend" : "interactive"}
         keyboardBlurBehavior="restore"
-        android_keyboardInputMode="adjustResize"
+        android_keyboardInputMode="adjustPan"
         backdropComponent={SheetBackdrop}
       >
         <BottomSheetContent className={cn("pb-safe", fullHeight && "flex-1")}>

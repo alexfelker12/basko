@@ -7,7 +7,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
+import { KeyboardProvider, useResizeMode } from "react-native-keyboard-controller";
 
 import { ErrorScreen } from "@/components/error-screen";
 import { AppToastProvider } from "@/components/toast-host";
@@ -68,6 +68,11 @@ function AppShell() {
 
 export default function RootLayout() {
   // useDrizzleStudio(db.$client)
+
+  // Android-Eingabemodus einmalig fest auf „resize“: Mit dem KeyboardProvider bleibt das Fenster
+  // dabei unverändert (Rand bis Rand) – Sheets, Dialoge, Toasts und Suchleisten heben sich selbst
+  // über die Tastatur. Andere Komponenten lesen die Tastatur nur über `useKeyboardHeight()`.
+  useResizeMode();
 
   return (
     <QueryClientProvider client={queryClient}>
