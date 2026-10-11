@@ -1,14 +1,9 @@
 import { useState } from "react";
 
-import { useLastDefined } from "@/hooks/use-last-defined";
-
+import { ProductSheet } from "@/components/products/product-sheet";
 import { Sheet } from "@/components/sheet";
-import { useOtherCategoryName } from "@/hooks/use-catalog";
-import {
-  useAddListItem,
-  useAddNewProductToList,
-  useUpdateListItem,
-} from "@/hooks/use-list-items";
+import { useLastDefined } from "@/hooks/use-last-defined";
+import { useAddListItem, useUpdateListItem } from "@/hooks/use-list-items";
 import { t } from "@/lib/i18n";
 import type { ProductSearchResult } from "@/lib/product-search";
 import type { ItemValues, ListItemRow } from "@/lib/queries/list-items";
@@ -18,19 +13,20 @@ import { DEFAULT_UNIT } from "@/lib/units";
 import { ItemForm } from "./item-form";
 import { ProductSearch } from "./product-search";
 
-/**
- * Produkt im Hinzufügen-Sheet: aus dem Katalog oder – bei „‚{Suchtext}‘ neu anlegen“ – ein Entwurf
- * ohne ID, der erst beim Absenden angelegt wird.
- */
+/** Produkt im Hinzufügen-Sheet (3e). */
 export type AddableProduct = Pick<
   CatalogProduct,
-  "name" | "categoryName" | "lastQuantity" | "lastUnit"
-> & { id: string | null };
+  "id" | "name" | "categoryName" | "lastQuantity" | "lastUnit"
+>;
 
-/** Zustand in „Liste bearbeiten“: Suche → Hinzufügen bzw. Bearbeiten. */
+/**
+ * Zustand in „Liste bearbeiten“: Suche → Hinzufügen bzw. Bearbeiten; „‚{Suchtext}‘ neu anlegen“
+ * (3d) führt über „Neues Produkt“ (4d) direkt ins Hinzufügen-Sheet.
+ */
 export type AddItemsStep =
   | { kind: "closed" }
   | { kind: "search" }
+  | { kind: "create"; name: string }
   | { kind: "add"; product: AddableProduct }
   | { kind: "edit"; item: ListItemRow; fromSearch: boolean };
 
@@ -50,25 +46,26 @@ function initialValuesFor(product: AddableProduct): ItemValues {
 }
 
 /**
- * Such-Sheet (3c/3d, 90 % hoch) und Eintrags-Sheet für Hinzufügen (3e) bzw. Bearbeiten (3).
- * Nach dem Hinzufügen öffnet sich die Suche wieder leer mit Tastatur.
+ * Such-Sheet (3c/3d, 90 % hoch), „Neues Produkt“ (4d) und Eintrags-Sheet für Hinzufügen (3e)
+ * bzw. Bearbeiten (3). Nach dem Hinzufügen öffnet sich die Suche wieder leer mit Tastatur.
  */
 export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem }: AddItemsSheetsProps) {
   const [query, setQuery] = useState("");
   const addItem = useAddListItem();
   const updateItem = useUpdateListItem();
-  const addNewProduct = useAddNewProductToList();
-  const otherCategoryName = useOtherCategoryName() ?? "";
 
   const itemStep = useLastDefined(step.kind === "add" || step.kind === "edit" ? step : null);
 
   // Nie zwei Sheets gleichzeitig: das nächste öffnet erst, wenn das vorige ganz zu ist.
   // (Gleichzeitig schließen/öffnen samt Tastatur ließ das neue Sheet sofort wieder zugehen.)
   const [searchVisible, setSearchVisible] = useState(false);
+  const [productVisible, setProductVisible] = useState(false);
   const [itemVisible, setItemVisible] = useState(false);
-  const searchOpen = step.kind === "search" && !itemVisible;
-  const itemOpen = (step.kind === "add" || step.kind === "edit") && !searchVisible;
+  const searchOpen = step.kind === "search" && !productVisible && !itemVisible;
+  const productOpen = step.kind === "create" && !searchVisible && !itemVisible;
+  const itemOpen = (step.kind === "add" || step.kind === "edit") && !searchVisible && !productVisible;
   if (searchOpen && !searchVisible) setSearchVisible(true);
+  if (productOpen && !productVisible) setProductVisible(true);
   if (itemOpen && !itemVisible) setItemVisible(true);
   const itemIdsByProduct = new Map(items.map((item) => [item.productId, item.id]));
   const close = () => onStepChange({ kind: "closed" });
@@ -79,24 +76,19 @@ export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem
     onStepChange(item ? { kind: "edit", item, fromSearch: true } : { kind: "add", product });
   };
 
-  /** „Neu anlegen“ öffnet nur das Hinzufügen-Sheet; angelegt wird erst beim Absenden. */
-  const create = (name: string) =>
-    onStepChange({
-      kind: "add",
-      product: { id: null, name, categoryName: otherCategoryName, lastQuantity: null, lastUnit: null },
-    });
+  /** „Neu anlegen“ (3d) öffnet „Neues Produkt“ (4d) mit dem Suchtext als Namen. */
+  const create = (name: string) => onStepChange({ kind: "create", name });
 
-  const add = (product: AddableProduct, values: ItemValues) => {
-    const onSuccess = () => {
-      setQuery("");
-      backToSearch();
-    };
-    if (product.id) {
-      addItem.mutate({ listId, productId: product.id, values }, { onSuccess });
-    } else {
-      addNewProduct.mutate({ listId, name: product.name, values }, { onSuccess });
-    }
-  };
+  const add = (product: AddableProduct, values: ItemValues) =>
+    addItem.mutate(
+      { listId, productId: product.id, values },
+      {
+        onSuccess: () => {
+          setQuery("");
+          backToSearch();
+        },
+      }
+    );
 
   return (
     <>
@@ -115,10 +107,18 @@ export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem
         />
       </Sheet>
 
+      {/* Nach dem Anlegen geht es direkt ins Hinzufügen-Sheet; Wegwischen legt nichts an */}
+      <ProductSheet
+        state={productOpen && step.kind === "create" ? step : null}
+        onClose={close}
+        onClosed={() => setProductVisible(false)}
+        onCreated={(product) => onStepChange({ kind: "add", product })}
+      />
+
       <Sheet isOpen={itemOpen} onDismiss={close} onClosed={() => setItemVisible(false)}>
         {itemStep?.kind === "add" ? (
           <ItemForm
-            key={itemStep.product.id ?? `new:${itemStep.product.name}`}
+            key={itemStep.product.id}
             product={itemStep.product}
             initial={initialValuesFor(itemStep.product)}
             onBack={backToSearch}

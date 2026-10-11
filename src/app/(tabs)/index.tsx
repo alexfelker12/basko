@@ -72,8 +72,13 @@ export default function ListsScreen() {
   return (
     <View className="flex-1 bg-bg">
       <ScreenHeader title={t("lists.title")}>
-        {/* Einstellungen folgen in Phase 6 – bis dahin sichtbar, aber deaktiviert */}
-        <Button variant="ghost" size="icon" isDisabled aria-label={t("lists.settings")}>
+        {/* Einstellungen (8a) – vorerst nur mit der Ladenreihenfolge, der Rest folgt in Phase 6 */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onPress={cancelRenameFirst(() => router.push("/settings"))}
+          aria-label={t("lists.settings")}
+        >
           <ButtonIcon as={SettingsIcon} />
         </Button>
         <Button size="icon" onPress={() => setNewListOpen(true)} aria-label={t("lists.newList")}>

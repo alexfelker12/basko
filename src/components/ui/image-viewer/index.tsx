@@ -1,4 +1,6 @@
 'use client';
+// Basko: gluestack Image Viewer (alpha). Angepasst: Gesten beim Zoomen (siehe ZoomableImage),
+// `useImageViewer()` für eigene Kopf-/Fußzeilen. Im App-Code über `src/components/image-viewer.tsx`.
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -191,8 +193,14 @@ const ZoomableImage = React.memo(
       });
 
     // Pan gesture for when zoomed - allows free movement with edge detection
+    // Basko: `.enabled(scale.get() > 1)` wurde nur beim Rendern ausgewertet (die Zeile ist memoisiert)
+    // – gezoomt ließ sich das Bild dann nicht verschieben. Jetzt entscheidet die Geste beim Anfassen.
     const panGesture = Gesture.Pan()
-      .enabled(scale.get() > 1)
+      .manualActivation(true)
+      .onTouchesMove((_event, state) => {
+        if (scale.get() > 1) state.activate();
+        else state.fail();
+      })
       .onUpdate((event) => {
         // Calculate max translation bounds for zoomed image
         const maxTranslateX = ((scale.get() - 1) * SCREEN_WIDTH) / 2;
@@ -260,10 +268,11 @@ const ZoomableImage = React.memo(
 
     // Vertical pan gesture for dismiss - only when NOT zoomed
     const dismissGesture = Gesture.Pan()
-      .enabled(scale.get() <= 1)
       .activeOffsetY([-10, 10]) // Activate only for vertical movement
       .failOffsetX([-20, 20]) // Fail if horizontal movement is too much
       .onUpdate((event) => {
+        // Basko: gezoomt gehört die Geste dem Verschieben (siehe panGesture)
+        if (scale.get() > 1) return;
         dismissProgress.set(Math.abs(event.translationY) / (SCREEN_HEIGHT * 0.3));
         translateY.set(event.translationY);
         opacity.set(interpolate(
@@ -274,6 +283,7 @@ const ZoomableImage = React.memo(
         ));
       })
       .onEnd((event) => {
+        if (scale.get() > 1) return;
         if (Math.abs(event.translationY) > 120) {
           runOnJS(onDismiss)();
         } else {
@@ -730,7 +740,11 @@ const ImageViewerCounter = React.forwardRef<View, { className?: string }>(
   }
 );
 
+/** Aktueller Zustand (Index, Bilder, Schließen) für eigene Bausteine im Viewer. */
+const useImageViewer = useImageViewerContext;
+
 export {
+  useImageViewer,
   ImageViewer,
   ImageViewerTrigger,
   ImageViewerContent,

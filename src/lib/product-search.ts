@@ -65,3 +65,26 @@ export function searchProducts(
     ...rest.map(({ product, parts }) => toResult(product, parts, false)),
   ];
 }
+
+export type CatalogMatch = {
+  product: CatalogProduct;
+  parts: HighlightPart[];
+};
+
+/**
+ * Produkte-Tab (4a/4b): Kategorie-Filter und Suche nach denselben Regeln wie im Such-Sheet
+ * (Teilwort, ohne Groß-/Kleinschreibung, umlauttolerant, Treffer markiert), alphabetisch.
+ */
+export function filterCatalog(
+  catalog: CatalogProduct[],
+  query: string,
+  categoryId: string | null
+): CatalogMatch[] {
+  return catalog
+    .filter((product) => categoryId === null || product.categoryId === categoryId)
+    .flatMap((product) => {
+      const parts = matchText(product.name, query);
+      return parts ? [{ product, parts }] : [];
+    })
+    .sort((a, b) => collator.compare(a.product.name, b.product.name));
+}

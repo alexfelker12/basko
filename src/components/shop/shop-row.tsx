@@ -15,7 +15,14 @@ import { cn } from "@gluestack-ui/utils/nativewind-utils";
  * Zeile im Einkaufsmodus (2a): runder Haken, Vorschaubild, Name, Mengen-Chip; Notiz mehrzeilig
  * unter dem Namen. Erledigt: Name durchgestrichen, Name und Chip mit 45 % Deckkraft.
  */
-export function ShopRow({ item, onToggle }: { item: ListItemRow; onToggle: () => void }) {
+interface ShopRowProps {
+  item: ListItemRow;
+  onToggle: () => void;
+  /** Tipp aufs Vorschaubild: Vollbildansicht (4c), nur mit Foto. */
+  onShowImage: () => void;
+}
+
+export function ShopRow({ item, onToggle, onShowImage }: ShopRowProps) {
   return (
     <Pressable
       onPress={onToggle}
@@ -25,8 +32,18 @@ export function ShopRow({ item, onToggle }: { item: ListItemRow; onToggle: () =>
       className="mx-page flex-row items-center gap-3.5 border-b border-line py-row"
     >
       <RoundCheckbox checked={item.checked} />
-      {/* Vollbildansicht per Tipp aufs Vorschaubild folgt mit den Fotos in Phase 3 */}
-      <ProductThumbnail name={item.productName} fileName={item.thumbnailFileName} />
+      {item.thumbnailFileName ? (
+        <Pressable
+          onPress={onShowImage}
+          role="button"
+          aria-label={t("shop.showImage", { name: item.productName })}
+          className="active:opacity-80"
+        >
+          <ProductThumbnail name={item.productName} fileName={item.thumbnailFileName} />
+        </Pressable>
+      ) : (
+        <ProductThumbnail name={item.productName} fileName={null} />
+      )}
       <View className={cn("min-w-0 flex-1", item.checked && "opacity-45")}>
         <Text className={cn("text-base font-bold", item.checked && "line-through")}>
           {item.productName}

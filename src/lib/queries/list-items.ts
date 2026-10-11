@@ -1,13 +1,12 @@
-import { and, asc, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { newId } from "@/lib/db/id";
-import { category, listItem, product, productImage } from "@/lib/db/schema";
+import { category, listItem, product } from "@/lib/db/schema";
 import type { Unit } from "@/lib/units";
 
-import { insertProductInOther } from "./products";
-
 import { touchList } from "./lists";
+import { firstProductImage } from "./products";
 
 export type ListItemRow = {
   id: string;
@@ -26,13 +25,6 @@ export type ListItemRow = {
   thumbnailFileName: string | null;
 };
 
-const firstImage = db
-  .select({ fileName: productImage.fileName })
-  .from(productImage)
-  .where(eq(productImage.productId, product.id))
-  .orderBy(asc(productImage.sortOrder))
-  .limit(1);
-
 /** Alle sichtbaren Einträge einer Liste mit Produkt und Kategorie. Sortiert wird in `lib/list-grouping`. */
 export function getListItems(listId: string): ListItemRow[] {
   return db
@@ -49,7 +41,7 @@ export function getListItems(listId: string): ListItemRow[] {
       unit: listItem.unit,
       note: listItem.note,
       checked: listItem.checked,
-      thumbnailFileName: sql<string | null>`(${firstImage})`,
+      thumbnailFileName: sql<string | null>`(${firstProductImage})`,
     })
     .from(listItem)
     .innerJoin(product, eq(product.id, listItem.productId))
@@ -80,31 +72,6 @@ function rememberProductUsage(productId: string, values: Pick<ItemValues, "quant
 /** Hinzufügen (3e). Liefert die ID des Eintrags. */
 export function addListItem(listId: string, productId: string, values: ItemValues): string {
   return db.transaction(() => insertListItem(listId, productId, values));
-}
-
-/**
- * „‚{Suchtext}‘ neu anlegen“ (3d): Produkt in „Sonstiges“ anlegen und eintragen – erst beim
- * Absenden und in einer Transaktion, damit ein verworfenes Sheet nichts hinterlässt.
- */
-export function addNewProductToList(listId: string, name: string, values: ItemValues): string | null {
-  return db.transaction(() => {
-    const created = insertProductInOther(name);
-    if (!created) return null;
-
-    // Gab es den Namen schon und steht das Produkt bereits in der Liste, bleibt der Eintrag bestehen
-    const existing = db
-      .select({ id: listItem.id })
-      .from(listItem)
-      .where(
-        and(
-          eq(listItem.listId, listId),
-          eq(listItem.productId, created.id),
-          isNull(listItem.deletedAt)
-        )
-      )
-      .get();
-    return existing ? existing.id : insertListItem(listId, created.id, values);
-  });
 }
 
 /** Eintrag anlegen, ohne eigene Transaktion. */
