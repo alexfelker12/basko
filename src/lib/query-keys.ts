@@ -11,4 +11,5 @@ export const queryKeys = {
   productImages: (id: string) => ["products", "images", id] as const,
   productListCount: (id: string) => ["products", "list-count", id] as const,
   categories: ["products", "categories"] as const,
+  transferHistory: ["transfer-history"] as const,
 };
