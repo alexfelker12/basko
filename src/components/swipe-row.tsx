@@ -142,6 +142,7 @@ export function SwipeRow({
   const actionStyle = useAnimatedStyle(() => ({
     width: Math.max(actionWidth, -translateX.get()),
     // Erst sichtbar, wenn die Zeile verschoben ist – sonst blitzt die Aktion beim Einblenden auf
+    // (Startwert zusätzlich per `opacity-0`, siehe unten)
     opacity: translateX.get() < 0 ? 1 : 0,
   }));
 
@@ -150,7 +151,9 @@ export function SwipeRow({
 
   return (
     <View onLayout={onLayout} className="overflow-hidden">
-      <StyledAnimatedView style={actionStyle} className="absolute bottom-0 right-0 top-0">
+      {/* `opacity-0` gilt schon im ersten Frame: Der animierte Style greift beim Einblenden des
+          Screens erst einen Moment später, bis dahin blitzte die Aktion am rechten Rand auf */}
+      <StyledAnimatedView style={actionStyle} className="absolute bottom-0 right-0 top-0 opacity-0">
         <Pressable
           onPress={onActionPress}
           role="button"
