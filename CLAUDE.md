@@ -6,7 +6,7 @@ Basko ist eine private Einkaufslisten-App (Expo / React Native) für Android und
 
 1. **Spezifikation** – „Basko – App-Spezifikation“
    - Live-Dokument: https://claude.ai/code/artifact/b34d56c0-1c9e-4def-ada0-833ec0da8812
-   - Kopie im claude.ai-Projekt „Basko“: `Basko – App-Spezifikation.md`
+   - Kopie im claude.ai-Projekt „Basko“: `Basko – App-Spezifikation.md` (Markdown-Export des Live-Dokuments; nach Änderungen am Live-Dokument neu exportieren)
    - Sie beschreibt jedes Verhalten. Wo Spezifikation und Design abweichen, gilt die Spezifikation.
 2. **Design** – Claude-Design-Projekt „Basko“ (`Basko.dc.html`, 10 Bereiche, 57 Screens, 380 × 800)
    - https://claude.ai/design/p/448fe483-f502-4c86-9c92-f1eb6a2dce67?file=Basko.dc.html
@@ -14,7 +14,9 @@ Basko ist eine private Einkaufslisten-App (Expo / React Native) für Android und
    - Screen-IDs (1a, 3e·2, 6h …) aus dem Design werden in Code-Kommentaren und Gesprächen als Referenz benutzt.
 3. **digi-list** – nur Referenz: TCP-Protokoll (`src/lib/transfer/tcp-transfer.ts`), Export (`src/hooks/use-export-list.ts`), Migrations-Setup (`drizzle.config.ts`, `metro.config.js`).
 
-**Arbeitsregel:** Nicht raten. Weicht etwas von der Spezifikation ab oder ist es dort nicht geregelt, zuerst nachfragen. Wird eine Entscheidung geändert, die Spezifikation mit aktualisieren.
+**Arbeitsregel:** Nicht raten. Weicht etwas von der Spezifikation ab oder ist es dort nicht geregelt, zuerst nachfragen. Wird eine Entscheidung geändert, die Spezifikation mit aktualisieren (Live-Dokument gezielt über den Claude-Docs-Connector, danach die Projekt-Kopie).
+
+**Git:** Phase 2 lief auf dem Branch `phase-2-listen`. Commits als „Alex Felker <alexanderfelker@gmx.net>“ im Conventional-Commits-Stil. Claude committet nur die eigenen Dateien – lokale Änderungen von Alex bleiben unangetastet – und pusht nicht; den Push macht Alex selbst.
 
 ## Stack
 
@@ -63,7 +65,7 @@ pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (sr
 
 - `src/app` – Routen (expo-router). Tabs: Listen (Start), Produkte, Transfer, Rezepte. Stack-Screens ohne Tab-Leiste: Einkaufsmodus, Liste bearbeiten, Einstellungen, Ladenreihenfolge, Geräteauswahl, Rezept-Details.
 - `src/components/ui` – gluestack-Komponenten (generiert, an unsere Tokens angepasst)
-- `src/components` – eigene Komponenten (SwipeRow, Stepper, ColorSwatchPicker …)
+- `src/components` – eigene Komponenten (SwipeRow, Stepper, ColorSwatchPicker, `toast-host.tsx`, `sheet.tsx`, `dialog.tsx` …); `items/` (Such-, Hinzufügen-/Bearbeiten-Sheets, Einheiten-Auswahl), `lists/` (Listenzeile, Dialoge, Aktionen-Sheet), `shop/` (Zeilen im Einkaufsmodus)
 - `src/lib/db` – Drizzle-Client, Schema (`schema/`), Migrationen (`migrations/`, generiert), `seed.ts` (Standard-Kategorien + „Sonstiges“), `purge.ts` (Soft-Deletes beim Start), `id.ts` (`newId()` – IDs immer explizit setzen, kein `$defaultFn` mit expo-crypto im Schema)
 - `src/lib/i18n` – `t("schlüssel", { platzhalter })`, Texte in `locales/de.ts`; Pluralformen `{ one, other }` mit `count`
 - `src/lib/queries` – DB-Funktionen je Bereich (`lists.ts`, `list-items.ts`, `products.ts`), synchron, nur Drizzle-Builder
@@ -82,6 +84,9 @@ pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (sr
 - **Bedingte Klassen immer mit `cn()`** aus `@gluestack-ui/utils/nativewind-utils`, nie mit Template-Strings.
 - Maß-Tokens: `rounded-card` (14), `rounded-thumb` (10), `px-page` (18), `py-row` (13).
 - Eingabefelder: `Input size="default"` (48) oder `size="sm"` (44); `InputField` übernimmt die Höhe über den Style-Kontext, damit der Text mittig sitzt. In Formularen: `field.TextField size=…`.
+- **Android-Fallen** (alle auf dem Gerät aufgefallen):
+  - Wisch-Aktionen hinter Zeilen starten mit `opacity-0` als Klasse – der animierte Style greift beim Einblenden eines Screens erst einen Moment später (sonst blitzt die Aktion auf).
+  - Kurze Chip-Texte mit Zahl + Einheit: geschütztes Leerzeichen und `textBreakStrategy="simple"` (`QuantityChip`), sonst verschwand „Stk“ bei „3 Stk“.
 - Pan-Gesten (Gesture Handler): Android setzt `translationX/Y` beim Aktivieren auf 0 zurück. Wer die Richtung oder den Weg ab dem Aufsetzen braucht, rechnet mit `absoluteX/Y` ab `onBegin` (siehe `toast-host.tsx`).
 - Animierte Views mit `className` über `StyledAnimatedView` aus `src/components/ui/utils/animated.ts` (inkl. `layout`/`entering`/`exiting`).
 - **Datenbank: nur das Builder-Pattern** (`db.select().from(…)`, `insert`, `update`, `delete`), nicht die Query-API (`db.query.…`). Abfragen laufen synchron; Hooks invalidieren danach `queryKeys.lists` bzw. `queryKeys.products`.
@@ -111,8 +116,9 @@ pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (sr
 
 1. ✓ Fundament: Tokens hell/dunkel, gluestack-Theming, Manrope, Tab-Leiste, i18n, Drizzle-Schema + Migrationen + Seed (inkl. „Sonstiges“), `settings`, Theme beim Start, gluestack-Basiskomponenten (eigene Komponenten wie SwipeRow, Stepper kommen mit ihrer Phase)
 2. ✓ Listen-Übersicht, Liste bearbeiten, Einkaufsmodus
-   - Entschieden: „1 Produkt“ im Singular. „‚{Suchtext}‘ neu anlegen“ öffnet bis Phase 3 direkt das Hinzufügen-Sheet; das Produkt entsteht erst beim Absenden in „Sonstiges“ (ohne Sheet 4d, `addNewProductToList`). Zahnrad, „Über Netzwerk senden“ und „Als Datei exportieren“ sind bis Phase 4/6 sichtbar, aber deaktiviert. Vorschaubild-Tipp → Vollbild folgt mit Phase 3.
-3. Produkte (Fotos, Bildansicht), Kategorien, Ladenreihenfolge
+   - Entschieden: „1 Produkt“ im Singular. Labels im Item-Sheet: „Löschen“ (Bearbeiten) bzw. „Entfernen“ (Einkaufsmodus). Badge „zuletzt genutzt“ nur, wenn das Produkt nicht schon „in Liste“ ist. Header im Einkaufsmodus: Zurücksetzen (ghost) links, Stift (secondary) außen. Eine gewählte weitere Einheit ist im Einheiten-Umschalter so breit wie ihr Name. „‚{Suchtext}‘ neu anlegen“ öffnet bis Phase 3 direkt das Hinzufügen-Sheet; das Produkt entsteht erst beim Absenden in „Sonstiges“ (ohne Sheet 4d, `addNewProductToList`). Zahnrad, „Über Netzwerk senden“ und „Als Datei exportieren“ sind bis Phase 4/6 sichtbar, aber deaktiviert. Vorschaubild-Tipp → Vollbild folgt mit Phase 3.
+   - Offen: Soll der Dialog „Neue Liste“ (1f) eine Vorschau der Listenzeile zeigen wie der Farbdialog (3g)? Bisher ohne – Alex fragen.
+3. Produkte (Fotos, Bildansicht), Kategorien, Ladenreihenfolge – als Nächstes; dann „‚{Suchtext}‘ neu anlegen“ auf Sheet 4d umstellen und den Vorschaubild-Tipp → Vollbild ergänzen
 4. Transfer über Netzwerk, Datei-Export/-Import
 5. Rezepte
 6. Einstellungen, Sicherung/Wiederherstellung
