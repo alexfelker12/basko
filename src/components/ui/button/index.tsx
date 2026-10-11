@@ -83,7 +83,7 @@ const buttonIconStyle = tva({
     size: {
       default: 'h-5 w-5',
       sm: 'h-4 w-4',
-      icon: 'h-6 w-6',
+      icon: 'h-5 w-5',
     },
   },
 });

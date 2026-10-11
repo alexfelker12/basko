@@ -5,6 +5,8 @@ import { newId } from "@/lib/db/id";
 import { category, listItem, product, productImage } from "@/lib/db/schema";
 import type { Unit } from "@/lib/units";
 
+import { insertProductInOther } from "./products";
+
 import { touchList } from "./lists";
 
 export type ListItemRow = {
@@ -77,37 +79,65 @@ function rememberProductUsage(productId: string, values: Pick<ItemValues, "quant
 
 /** Hinzufügen (3e). Liefert die ID des Eintrags. */
 export function addListItem(listId: string, productId: string, values: ItemValues): string {
+  return db.transaction(() => insertListItem(listId, productId, values));
+}
+
+/**
+ * „‚{Suchtext}‘ neu anlegen“ (3d): Produkt in „Sonstiges“ anlegen und eintragen – erst beim
+ * Absenden und in einer Transaktion, damit ein verworfenes Sheet nichts hinterlässt.
+ */
+export function addNewProductToList(listId: string, name: string, values: ItemValues): string | null {
   return db.transaction(() => {
-    // Ein noch auf Rückgängig wartender Eintrag desselben Produkts wird sofort endgültig gelöscht,
-    // sonst kollidiert er mit dem neuen (ein Produkt steht höchstens einmal in einer Liste).
-    db.delete(listItem)
+    const created = insertProductInOther(name);
+    if (!created) return null;
+
+    // Gab es den Namen schon und steht das Produkt bereits in der Liste, bleibt der Eintrag bestehen
+    const existing = db
+      .select({ id: listItem.id })
+      .from(listItem)
       .where(
         and(
           eq(listItem.listId, listId),
-          eq(listItem.productId, productId),
-          isNotNull(listItem.deletedAt)
+          eq(listItem.productId, created.id),
+          isNull(listItem.deletedAt)
         )
       )
-      .run();
-
-    const id = newId();
-    db.insert(listItem)
-      .values({
-        id,
-        listId,
-        productId,
-        quantity: values.quantity,
-        unit: values.unit,
-        note: normalizeNote(values.note),
-        checked: false,
-        createdAt: new Date(),
-      })
-      .run();
-
-    rememberProductUsage(productId, values);
-    touchList(listId);
-    return id;
+      .get();
+    return existing ? existing.id : insertListItem(listId, created.id, values);
   });
+}
+
+/** Eintrag anlegen, ohne eigene Transaktion. */
+function insertListItem(listId: string, productId: string, values: ItemValues): string {
+  // Ein noch auf Rückgängig wartender Eintrag desselben Produkts wird sofort endgültig gelöscht,
+  // sonst kollidiert er mit dem neuen (ein Produkt steht höchstens einmal in einer Liste).
+  db.delete(listItem)
+    .where(
+      and(
+        eq(listItem.listId, listId),
+        eq(listItem.productId, productId),
+        isNotNull(listItem.deletedAt)
+      )
+    )
+    .run();
+
+  const id = newId();
+  db.insert(listItem)
+    .values({
+      id,
+      listId,
+      productId,
+      quantity: values.quantity,
+      unit: values.unit,
+      note: normalizeNote(values.note),
+      checked: false,
+      createdAt: new Date(),
+    })
+    .run();
+
+  rememberProductUsage(productId, values);
+  touchList(listId);
+  return id;
 }
 
 /** Menge/Einheit/Notiz ändern (Mengenregler, Bearbeiten-Sheet, Schnell-Bearbeiten). */

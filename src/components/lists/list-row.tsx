@@ -102,7 +102,7 @@ export function ListRenameRow({ list, onSubmit, onCancel }: ListRenameRowProps) 
             onBlur={onCancel}
             accessibilityLabel={t("lists.nameInput")}
             className="flex-1"
-            inputClassName="h-11"
+            size="sm"
           />
         )}
       </form.AppField>

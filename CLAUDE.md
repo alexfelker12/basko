@@ -79,6 +79,7 @@ pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (sr
 - **Schriftgrößen nur über `text-xs` … `text-2xl`** (Basis 16 px), keine `text-[…px]`. Designwerte runden: 11–12,5 → `xs`, 13–14 → `sm`, 15–16 → `base`, 17–18 → `lg`, 19–20 → `xl`.
 - **Bedingte Klassen immer mit `cn()`** aus `@gluestack-ui/utils/nativewind-utils`, nie mit Template-Strings.
 - Maß-Tokens: `rounded-card` (14), `rounded-thumb` (10), `px-page` (18), `py-row` (13).
+- Eingabefelder: `Input size="default"` (48) oder `size="sm"` (44); `InputField` übernimmt die Höhe über den Style-Kontext, damit der Text mittig sitzt. In Formularen: `field.TextField size=…`.
 - Animierte Views mit `className` über `StyledAnimatedView` aus `src/components/ui/utils/animated.ts` (inkl. `layout`/`entering`/`exiting`).
 - **Datenbank: nur das Builder-Pattern** (`db.select().from(…)`, `insert`, `update`, `delete`), nicht die Query-API (`db.query.…`). Abfragen laufen synchron; Hooks invalidieren danach `queryKeys.lists` bzw. `queryKeys.products`.
 - Texte immer mit `Text` aus `@/components/ui/text` (Manrope, Standard 500). Manrope ist nativ eingebunden (expo-font-Plugin in `app.json`), Gewichte über `font-medium` … `font-extrabold`.
@@ -107,7 +108,7 @@ pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (sr
 
 1. ✓ Fundament: Tokens hell/dunkel, gluestack-Theming, Manrope, Tab-Leiste, i18n, Drizzle-Schema + Migrationen + Seed (inkl. „Sonstiges“), `settings`, Theme beim Start, gluestack-Basiskomponenten (eigene Komponenten wie SwipeRow, Stepper kommen mit ihrer Phase)
 2. ✓ Listen-Übersicht, Liste bearbeiten, Einkaufsmodus
-   - Entschieden: „1 Produkt“ im Singular. „‚{Suchtext}‘ neu anlegen“ legt bis Phase 3 direkt in „Sonstiges“ an (ohne Sheet 4d). Zahnrad, „Über Netzwerk senden“ und „Als Datei exportieren“ sind bis Phase 4/6 sichtbar, aber deaktiviert. Vorschaubild-Tipp → Vollbild folgt mit Phase 3.
+   - Entschieden: „1 Produkt“ im Singular. „‚{Suchtext}‘ neu anlegen“ öffnet bis Phase 3 direkt das Hinzufügen-Sheet; das Produkt entsteht erst beim Absenden in „Sonstiges“ (ohne Sheet 4d, `addNewProductToList`). Zahnrad, „Über Netzwerk senden“ und „Als Datei exportieren“ sind bis Phase 4/6 sichtbar, aber deaktiviert. Vorschaubild-Tipp → Vollbild folgt mit Phase 3.
 3. Produkte (Fotos, Bildansicht), Kategorien, Ladenreihenfolge
 4. Transfer über Netzwerk, Datei-Export/-Import
 5. Rezepte

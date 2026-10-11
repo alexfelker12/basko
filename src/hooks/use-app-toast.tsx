@@ -1,6 +1,6 @@
 import { CheckIcon } from "lucide-react-native";
 import { useCallback } from "react";
-import { View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/ui/icon";
@@ -22,6 +22,8 @@ type ShowToastOptions = {
 export function useAppToast() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
+  // Der Toast-Container passt sich dem Inhalt an – ohne feste Breite fällt der Titel (flex-1) auf 0
+  const { width } = useWindowDimensions();
   const marginBottom = Math.max(TOAST_BOTTOM_OFFSET - insets.bottom, 0);
 
   return useCallback(
@@ -31,7 +33,7 @@ export function useAppToast() {
         duration,
         avoidKeyboard: true,
         render: ({ id }) => (
-          <View className="w-full px-3" style={{ marginBottom }}>
+          <View className="px-3" style={{ width, marginBottom }}>
             <Toast nativeID={`toast-${id}`}>
               {withCheck ? <Icon as={CheckIcon} size="lg" className="text-bg" /> : null}
               <ToastTitle>{title}</ToastTitle>
@@ -48,6 +50,6 @@ export function useAppToast() {
           </View>
         ),
       }),
-    [toast, marginBottom]
+    [toast, width, marginBottom]
   );
 }

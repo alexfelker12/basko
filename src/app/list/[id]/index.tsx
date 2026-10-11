@@ -150,9 +150,6 @@ export default function ShopScreen() {
   return (
     <View className="flex-1 bg-bg">
       <StackHeader title={list?.name ?? ""}>
-        <Button variant="ghost" size="icon" onPress={openEdit} aria-label={t("shop.editList")}>
-          <ButtonIcon as={PencilIcon} />
-        </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -160,6 +157,9 @@ export default function ShopScreen() {
           aria-label={t("shop.resetChecks")}
         >
           <ButtonIcon as={RotateCcwIcon} />
+        </Button>
+        <Button variant="secondary" size="icon" onPress={openEdit} aria-label={t("shop.editList")}>
+          <ButtonIcon as={PencilIcon} />
         </Button>
       </StackHeader>
 

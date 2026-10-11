@@ -44,34 +44,44 @@ function getCatalogProduct(id: string): CatalogProduct | null {
   );
 }
 
+/** Name der Systemkategorie „Sonstiges“ (Anzeige beim Neuanlegen, 3d). */
+export function getOtherCategoryName(): string | null {
+  return (
+    db
+      .select({ name: category.name })
+      .from(category)
+      .where(eq(category.isSystem, true))
+      .get()?.name ?? null
+  );
+}
+
 /**
  * „‚{Suchtext}‘ neu anlegen“ (3d) – in Phase 2 direkt in „Sonstiges“, ohne Fotos.
  * Gibt es den Namen schon (ohne Beachtung der Groß-/Kleinschreibung), wird das vorhandene Produkt geliefert.
+ * Ohne eigene Transaktion – Aufrufer (`addNewProductToList`) klammert.
  */
-export function createProductInOther(name: string): CatalogProduct | null {
+export function insertProductInOther(name: string): CatalogProduct | null {
   const trimmed = name.trim().slice(0, PRODUCT_NAME_MAX);
   if (!trimmed) return null;
 
-  return db.transaction(() => {
-    const lower = trimmed.toLocaleLowerCase("de");
-    const existing = db
-      .select({ id: product.id, name: product.name })
-      .from(product)
-      .all()
-      .find((row) => row.name.toLocaleLowerCase("de") === lower);
-    if (existing) return getCatalogProduct(existing.id);
+  const lower = trimmed.toLocaleLowerCase("de");
+  const existing = db
+    .select({ id: product.id, name: product.name })
+    .from(product)
+    .all()
+    .find((row) => row.name.toLocaleLowerCase("de") === lower);
+  if (existing) return getCatalogProduct(existing.id);
 
-    const other = db
-      .select({ id: category.id })
-      .from(category)
-      .where(eq(category.isSystem, true))
-      .get();
-    if (!other) return null;
+  const other = db
+    .select({ id: category.id })
+    .from(category)
+    .where(eq(category.isSystem, true))
+    .get();
+  if (!other) return null;
 
-    const id = newId();
-    db.insert(product)
-      .values({ id, name: trimmed, categoryId: other.id, createdAt: new Date() })
-      .run();
-    return getCatalogProduct(id);
-  });
+  const id = newId();
+  db.insert(product)
+    .values({ id, name: trimmed, categoryId: other.id, createdAt: new Date() })
+    .run();
+  return getCatalogProduct(id);
 }

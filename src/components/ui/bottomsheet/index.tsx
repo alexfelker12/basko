@@ -101,9 +101,15 @@ export const BottomSheet = forwardRef<BottomSheetRef, IBottomSheetRootProps>(
     const [isVisible, setIsVisible] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(-1);
 
+    // Basko: gorhom 5 animiert nicht auf Änderungen des `index`-Props – daher imperativ
+    // öffnen/schließen. Sichtbar bleibt das Sheet bis `onChange(-1)` nach der Animation.
     const handleOpen = useCallback(
       (index?: number) => {
         const targetIndex = index ?? defaultSnapIndex;
+        if (bottomSheetRef.current) {
+          // Schon eingehängt (z. B. gerade beim Schließen) → zurückholen
+          bottomSheetRef.current.snapToIndex(targetIndex);
+        }
         setCurrentIndex(targetIndex);
         setIsVisible(true);
         onOpen?.();
@@ -113,7 +119,7 @@ export const BottomSheet = forwardRef<BottomSheetRef, IBottomSheetRootProps>(
 
     const handleClose = useCallback(() => {
       Keyboard.dismiss();
-      setCurrentIndex(-1);
+      bottomSheetRef.current?.close();
     }, []);
 
     const handleSheetChanges = useCallback(
@@ -278,6 +284,7 @@ export const BottomSheetBackdrop = ({
   opacity = 0.5,
   className,
   pressBehavior = 'close',
+  onPress,
   ...props
 }: IBottomSheetBackdropProps) => {
   return (
@@ -289,6 +296,11 @@ export const BottomSheetBackdrop = ({
       opacity={opacity}
       pressBehavior={pressBehavior}
       {...props}
+      // Basko: Tipp daneben schließt die Tastatur sofort, nicht erst nach der Sheet-Animation
+      onPress={() => {
+        Keyboard.dismiss();
+        onPress?.();
+      }}
     />
   );
 };

@@ -15,8 +15,9 @@ type TextFieldProps = Pick<
   accessibilityLabel?: string;
   /** Zusätzlich zu `field.handleBlur`, z. B. „Umbenennen verwerfen“ (1d). */
   onBlur?: () => void;
+  /** Höhe: default 48, sm 44 (Inline-Umbenennen). */
+  size?: "default" | "sm";
   className?: string;
-  inputClassName?: string;
 };
 
 /** Textfeld (gluestack Input, Höhe 48, Fokus = 2 px primary) – im Sheet keyboard aware. */
@@ -24,8 +25,8 @@ export function TextFieldComponent({
   label,
   accessibilityLabel,
   onBlur,
+  size,
   className,
-  inputClassName,
   ...inputProps
 }: TextFieldProps) {
   const field = useFieldContext<string>();
@@ -34,7 +35,7 @@ export function TextFieldComponent({
 
   return (
     <FieldShell label={label} error={error} className={className}>
-      <Input isInvalid={Boolean(error)} className={inputClassName}>
+      <Input isInvalid={Boolean(error)} size={size}>
         <InputField
           {...inputProps}
           value={field.state.value}

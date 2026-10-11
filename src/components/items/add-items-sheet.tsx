@@ -4,8 +4,12 @@ import { useLastDefined } from "@/hooks/use-last-defined";
 
 import { Sheet } from "@/components/sheet";
 import { useAppToast } from "@/hooks/use-app-toast";
-import { useCreateProductInOther } from "@/hooks/use-catalog";
-import { useAddListItem, useUpdateListItem } from "@/hooks/use-list-items";
+import { useOtherCategoryName } from "@/hooks/use-catalog";
+import {
+  useAddListItem,
+  useAddNewProductToList,
+  useUpdateListItem,
+} from "@/hooks/use-list-items";
 import { t } from "@/lib/i18n";
 import type { ProductSearchResult } from "@/lib/product-search";
 import type { ItemValues, ListItemRow } from "@/lib/queries/list-items";
@@ -15,11 +19,20 @@ import { DEFAULT_UNIT } from "@/lib/units";
 import { ItemForm } from "./item-form";
 import { ProductSearch } from "./product-search";
 
+/**
+ * Produkt im Hinzufügen-Sheet: aus dem Katalog oder – bei „‚{Suchtext}‘ neu anlegen“ – ein Entwurf
+ * ohne ID, der erst beim Absenden angelegt wird.
+ */
+export type AddableProduct = Pick<
+  CatalogProduct,
+  "name" | "categoryName" | "lastQuantity" | "lastUnit"
+> & { id: string | null };
+
 /** Zustand in „Liste bearbeiten“: Suche → Hinzufügen bzw. Bearbeiten. */
 export type AddItemsStep =
   | { kind: "closed" }
   | { kind: "search" }
-  | { kind: "add"; product: CatalogProduct }
+  | { kind: "add"; product: AddableProduct }
   | { kind: "edit"; item: ListItemRow; fromSearch: boolean };
 
 interface AddItemsSheetsProps {
@@ -31,7 +44,7 @@ interface AddItemsSheetsProps {
 }
 
 /** Vorbelegung: zuletzt benutzte Menge und Einheit des Produkts, sonst 1 Stk (3e). */
-function initialValuesFor(product: CatalogProduct): ItemValues {
+function initialValuesFor(product: AddableProduct): ItemValues {
   return product.lastQuantity && product.lastUnit
     ? { quantity: product.lastQuantity, unit: product.lastUnit, note: null }
     : { quantity: 1, unit: DEFAULT_UNIT, note: null };
@@ -46,7 +59,8 @@ export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem
   const showToast = useAppToast();
   const addItem = useAddListItem();
   const updateItem = useUpdateListItem();
-  const createProduct = useCreateProductInOther();
+  const addNewProduct = useAddNewProductToList();
+  const otherCategoryName = useOtherCategoryName() ?? "";
 
   const itemStep = useLastDefined(step.kind === "add" || step.kind === "edit" ? step : null);
   const itemIdsByProduct = new Map(items.map((item) => [item.productId, item.id]));
@@ -58,12 +72,25 @@ export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem
     onStepChange(item ? { kind: "edit", item, fromSearch: true } : { kind: "add", product });
   };
 
+  /** „Neu anlegen“ öffnet nur das Hinzufügen-Sheet; angelegt wird erst beim Absenden. */
   const create = (name: string) =>
-    createProduct.mutate(name, {
-      onSuccess: (product) => {
-        if (product) onStepChange({ kind: "add", product });
-      },
+    onStepChange({
+      kind: "add",
+      product: { id: null, name, categoryName: otherCategoryName, lastQuantity: null, lastUnit: null },
     });
+
+  const add = (product: AddableProduct, values: ItemValues) => {
+    const onSuccess = () => {
+      showToast({ title: t("itemSheet.added", { name: product.name }) });
+      setQuery("");
+      backToSearch();
+    };
+    if (product.id) {
+      addItem.mutate({ listId, productId: product.id, values }, { onSuccess });
+    } else {
+      addNewProduct.mutate({ listId, name: product.name, values }, { onSuccess });
+    }
+  };
 
   /** Schließen per Wischen/Zurück – nur wenn dieses Sheet gerade das aktive ist. */
   const closeIf = (kind: AddItemsStep["kind"][]) => () => {
@@ -85,23 +112,12 @@ export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem
       <Sheet isOpen={step.kind === "add" || step.kind === "edit"} onClose={closeIf(["add", "edit"])}>
         {itemStep?.kind === "add" ? (
           <ItemForm
-            key={itemStep.product.id}
+            key={itemStep.product.id ?? `new:${itemStep.product.name}`}
             product={itemStep.product}
             initial={initialValuesFor(itemStep.product)}
             onBack={backToSearch}
             submitLabel={t("itemSheet.add")}
-            onSubmit={(values) =>
-              addItem.mutate(
-                { listId, productId: itemStep.product.id, values },
-                {
-                  onSuccess: () => {
-                    showToast({ title: t("itemSheet.added", { name: itemStep.product.name }) });
-                    setQuery("");
-                    backToSearch();
-                  },
-                }
-              )
-            }
+            onSubmit={(values) => add(itemStep.product, values)}
           />
         ) : null}
 
