@@ -1,11 +1,11 @@
 import { PackageIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, ScrollView, View } from "react-native";
-import { KeyboardStickyView } from "react-native-keyboard-controller";
 import { useSafeAreaFrame } from "react-native-safe-area-context";
 
 import { EmptyState } from "@/components/empty-state";
 import { ProductPhotoViewer } from "@/components/image-viewer";
+import { KeyboardSticky } from "@/components/keyboard-sticky";
 import { DeleteProductDialog } from "@/components/products/delete-product-dialog";
 import { ProductActionsSheet } from "@/components/products/product-actions-sheet";
 import { ProductRow, ProductTile } from "@/components/products/product-row";
@@ -60,9 +60,10 @@ export default function ProductsScreen() {
   const catalogEmpty = !isPending && catalog.length === 0;
 
   // Die Suchleiste sitzt über der Tab-Leiste: mit Tastatur nur um den Rest anheben
+  // (Abstand Unterkante Screen → Bildschirmrand = Tab-Leiste + Navigationsleiste)
   const frame = useSafeAreaFrame();
   const [screenHeight, setScreenHeight] = useState(frame.height);
-  const keyboardOffset = Math.max(0, frame.height - screenHeight);
+  const tabBarGap = Math.max(0, frame.height - screenHeight);
 
   const openMenuAction = (kind: "edit" | "delete") => {
     if (menuProduct) setPending({ kind, product: menuProduct });
@@ -172,10 +173,7 @@ export default function ProductsScreen() {
 
       {/* Schwebende Suche mit Kategorie-Chips darüber (4a) */}
       {catalogEmpty ? null : (
-        <KeyboardStickyView
-          offset={{ opened: keyboardOffset }}
-          style={{ position: "absolute", left: 0, right: 0, bottom: 0 }}
-        >
+        <KeyboardSticky bottomGap={tabBarGap} className="absolute bottom-0 left-0 right-0">
           <View className="bg-bg pb-2.5 pt-2">
             <ScrollView
               horizontal
@@ -224,7 +222,7 @@ export default function ProductsScreen() {
               </Input>
             </View>
           </View>
-        </KeyboardStickyView>
+        </KeyboardSticky>
       )}
 
       <ProductActionsSheet

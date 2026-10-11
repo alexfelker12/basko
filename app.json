@@ -9,7 +9,7 @@
     "android": {
       "predictiveBackGestureEnabled": false,
       "package": "com.alexfelker.basko",
-      "softwareKeyboardLayoutMode": "pan",
+      "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "android.permission.CHANGE_WIFI_MULTICAST_STATE",
         "android.permission.ACCESS_WIFI_STATE",

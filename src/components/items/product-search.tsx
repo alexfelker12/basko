@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Pressable, View } from "react-native";
 
 import { HighlightedText } from "@/components/highlighted-text";
+import { KeyboardSpacer } from "@/components/keyboard-spacer";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
@@ -88,6 +89,8 @@ export function ProductSearch({
             </View>
           ) : null}
         </View>
+        {/* Das hohe Sheet bleibt bei offener Tastatur stehen – Platz, um bis ans Ende zu scrollen */}
+        <KeyboardSpacer />
       </BottomSheetScrollView>
     </View>
   );

@@ -1,11 +1,12 @@
 import { useRouter } from "expo-router";
 import { PlusIcon, SettingsIcon, ShoppingCartIcon, Trash2Icon } from "lucide-react-native";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Keyboard, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { LinearTransition } from "react-native-reanimated";
 
 import { EmptyState } from "@/components/empty-state";
+import { KeyboardSpacer } from "@/components/keyboard-spacer";
 import { ListActionsSheet } from "@/components/lists/list-actions-sheet";
 import { ListRenameRow, ListRow } from "@/components/lists/list-row";
 import { NewListDialog } from "@/components/lists/new-list-dialog";
@@ -13,6 +14,7 @@ import { ScreenHeader } from "@/components/screen-header";
 import { SWIPE_ACTION_WIDTH, SwipeRow } from "@/components/swipe-row";
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { StyledAnimatedView } from "@/components/ui/utils/animated";
+import { useScrollFocusedInputIntoView } from "@/hooks/use-keyboard";
 import { useCreateList, useDuplicateList, useLists, useRenameList } from "@/hooks/use-lists";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { hapticTap } from "@/lib/haptics";
@@ -32,6 +34,13 @@ export default function ListsScreen() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [menuList, setMenuList] = useState<ListSummary | null>(null);
   const [newListOpen, setNewListOpen] = useState(false);
+
+  // Inline-Umbenennen (1d) weiter unten: die Zeile über die Tastatur scrollen
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollOffset = useRef(0);
+  useScrollFocusedInputIntoView(renamingId !== null, (dy) =>
+    scrollRef.current?.scrollTo({ y: scrollOffset.current + dy, animated: true })
+  );
 
   const deleteList = (list: ListSummary) =>
     deleteWithUndo({
@@ -93,7 +102,15 @@ export default function ListsScreen() {
           text={t("lists.empty.text")}
         />
       ) : (
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="pb-6">
+        <ScrollView
+          ref={scrollRef}
+          onScroll={(event) => {
+            scrollOffset.current = event.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          contentContainerClassName="pb-6"
+        >
           {lists.map((list) => (
             <StyledAnimatedView key={list.id} layout={LinearTransition.duration(200)}>
               {renamingId === list.id ? (
@@ -130,6 +147,7 @@ export default function ListsScreen() {
               )}
             </StyledAnimatedView>
           ))}
+          <KeyboardSpacer />
         </ScrollView>
       )}
 

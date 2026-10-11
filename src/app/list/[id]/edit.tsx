@@ -1,12 +1,13 @@
 import { useLocalSearchParams } from "expo-router";
 import { CheckIcon, ListIcon, SearchIcon, Trash2Icon } from "lucide-react-native";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Pressable, View } from "react-native";
-import { KeyboardStickyView } from "react-native-keyboard-controller";
 import { ScrollView } from "react-native-gesture-handler";
 import { LinearTransition } from "react-native-reanimated";
 
 import { EmptyState } from "@/components/empty-state";
+import { KeyboardSpacer } from "@/components/keyboard-spacer";
+import { KeyboardSticky } from "@/components/keyboard-sticky";
 import { AddItemsSheets, type AddItemsStep } from "@/components/items/add-items-sheet";
 import { ListColorDialog } from "@/components/lists/list-color-dialog";
 import { QuantityStepper } from "@/components/quantity-stepper";
@@ -16,6 +17,7 @@ import { SWIPE_ACTION_WIDTH, SwipeRow } from "@/components/swipe-row";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { StyledAnimatedView } from "@/components/ui/utils/animated";
+import { useScrollFocusedInputIntoView } from "@/hooks/use-keyboard";
 import { useListItems, useUpdateListItem } from "@/hooks/use-list-items";
 import { useListSummary, useSetListColor } from "@/hooks/use-lists";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
@@ -44,6 +46,13 @@ export default function EditListScreen() {
   const [colorOpen, setColorOpen] = useState(false);
 
   const groups = groupListItems(items, { checkedLast: false });
+
+  // Zahl im Mengenregler bearbeiten: die Zeile über die Tastatur scrollen (nicht bei offenem Sheet/Dialog)
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollOffset = useRef(0);
+  useScrollFocusedInputIntoView(step.kind === "closed" && !colorOpen, (dy) =>
+    scrollRef.current?.scrollTo({ y: scrollOffset.current + dy, animated: true })
+  );
 
   const deleteItem = (item: ListItemRow) =>
     deleteWithUndo({
@@ -83,6 +92,11 @@ export default function EditListScreen() {
         <EmptyState icon={ListIcon} title={t("editList.empty.title")} text={t("editList.empty.text")} />
       ) : (
         <ScrollView
+          ref={scrollRef}
+          onScroll={(event) => {
+            scrollOffset.current = event.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
           stickyHeaderIndices={stickyHeaderIndices(groups)}
           contentContainerClassName="pb-6"
@@ -110,11 +124,13 @@ export default function EditListScreen() {
               </StyledAnimatedView>
             )),
           ])}
+          {/* Platz zum Hochscrollen, solange die Tastatur offen ist */}
+          <KeyboardSpacer />
         </ScrollView>
       )}
 
       {/* Suchleiste unten, fest über der Tastatur (3a) */}
-      <KeyboardStickyView>
+      <KeyboardSticky>
         <View className="bg-bg px-page pb-safe pt-2">
           <Pressable
             onPress={() => setStep({ kind: "search" })}
@@ -128,7 +144,7 @@ export default function EditListScreen() {
             </Text>
           </Pressable>
         </View>
-      </KeyboardStickyView>
+      </KeyboardSticky>
 
       <AddItemsSheets
         listId={id}
