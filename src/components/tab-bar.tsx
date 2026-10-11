@@ -8,14 +8,12 @@ import {
   makeMutable,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from "react-native-reanimated";
 
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { StyledAnimatedView } from "@/components/ui/utils/animated";
-import { cn } from "@gluestack-ui/utils/nativewind-utils";
 
 /**
  * Icon-Animation beim Aktivieren – VORLÄUFIG vier Varianten zum Vergleich, je Tab eine
@@ -32,27 +30,16 @@ const PILL_WIDTH = 56;
 const PILL_HEIGHT = 30;
 
 const KICK = { duration: 460, easing: Easing.out(Easing.quad) };
-/** Die vordere Kante der Pille läuft voraus, die hintere zieht nach – die Pille dehnt sich kurz. */
-const LEADING_EDGE = { damping: 22, stiffness: 340, mass: 0.7 };
-const TRAILING_EDGE = { damping: 20, stiffness: 160, mass: 0.8 };
+const SLIDE = { duration: 280, easing: Easing.inOut(Easing.cubic) };
 
 /**
- * Eine gemeinsame Pille für die ganze Tab-Leiste (es gibt nur eine): linke und rechte Kante,
- * gemessen in der Tab-Leiste. `-1` = noch nicht gemessen.
+ * Eine gemeinsame Pille für die ganze Tab-Leiste (es gibt nur eine): linke Kante, gemessen in der
+ * Tab-Leiste. `-1` = noch nicht gemessen.
  */
 const pillLeft = makeMutable(-1);
-const pillRight = makeMutable(-1);
 
 function movePill(left: number, animate: boolean) {
-  const right = left + PILL_WIDTH;
-  if (!animate || pillLeft.value < 0) {
-    pillLeft.value = left;
-    pillRight.value = right;
-    return;
-  }
-  const forward = left > pillLeft.value;
-  pillLeft.value = withSpring(left, forward ? TRAILING_EDGE : LEADING_EDGE);
-  pillRight.value = withSpring(right, forward ? LEADING_EDGE : TRAILING_EDGE);
+  pillLeft.value = animate && pillLeft.value >= 0 ? withTiming(left, SLIDE) : left;
 }
 
 /**
@@ -61,16 +48,15 @@ function movePill(left: number, animate: boolean) {
  */
 export function TabBarPill() {
   const style = useAnimatedStyle(() => ({
-    left: pillLeft.value,
-    width: pillRight.value - pillLeft.value,
     opacity: pillLeft.value < 0 ? 0 : 1,
+    transform: [{ translateX: pillLeft.value }],
     // Rundung per Style statt `rounded-[999px]`: die Klasse griff hier auf dem Gerät nicht
     borderRadius: PILL_HEIGHT / 2,
   }));
 
   return (
     <View pointerEvents="none" className="absolute inset-0">
-      <StyledAnimatedView className="absolute top-2 h-7.5 bg-chip" style={style} />
+      <StyledAnimatedView className="absolute left-0 top-2 h-7.5 w-14 bg-chip" style={style} />
     </View>
   );
 }
@@ -83,7 +69,7 @@ type TabBarButtonProps = TabTriggerSlotProps & {
 
 /**
  * Eintrag der Tab-Leiste (TabBar, Komponenten 10a). Aktiv: Icon und Text in `primary`, die
- * Pille gleitet herüber; sonst `soft`. Wird von `TabTrigger asChild` mit `isFocused`, `onPress`
+ * Pille gleitet herüber und die Farben blenden mit ihr über; sonst `soft`. Wird von `TabTrigger asChild` mit `isFocused`, `onPress`
  * usw. versorgt.
  */
 export function TabBarButton({
@@ -99,6 +85,9 @@ export function TabBarButton({
   const focused = isFocused === true;
   /** Linke Kante der Pille, wenn dieser Tab aktiv ist (mittig über dem Icon). */
   const pillX = useRef<number | null>(null);
+  /** Dasselbe für den UI-Thread, dazu die Breite des Tabs – für den Farbverlauf. */
+  const ownLeft = useSharedValue(-1);
+  const ownWidth = useSharedValue(1);
   /** Einmaliger Ablauf 0 → 1 beim Aktivieren – treibt das Icon. */
   const kick = useSharedValue(1);
   const mounted = useRef(false);
@@ -114,6 +103,21 @@ export function TabBarButton({
     kick.value = 0;
     kick.value = withTiming(1, KICK);
   }, [focused, kick]);
+
+  /**
+   * Wie weit die Pille über diesem Tab steht (0–1): Icon und Text blenden im Gleichlauf mit der
+   * Pille von `soft` zu `primary` über – ein gleichmäßiger Verlauf statt eines harten Wechsels.
+   */
+  const activeStyle = useAnimatedStyle(() => {
+    if (pillLeft.value < 0 || ownLeft.value < 0) return { opacity: focused ? 1 : 0 };
+    const distance = Math.abs(pillLeft.value - ownLeft.value) / ownWidth.value;
+    return { opacity: Math.min(1, Math.max(0, 1 - distance)) };
+  });
+  const inactiveStyle = useAnimatedStyle(() => {
+    if (pillLeft.value < 0 || ownLeft.value < 0) return { opacity: focused ? 0 : 1 };
+    const distance = Math.abs(pillLeft.value - ownLeft.value) / ownWidth.value;
+    return { opacity: Math.min(1, Math.max(0, distance)) };
+  });
 
   const iconStyle = useAnimatedStyle(() => {
     const k = kick.value;
@@ -148,6 +152,8 @@ export function TabBarButton({
       onLayout={(event) => {
         const { x, width } = event.nativeEvent.layout;
         pillX.current = x + (width - PILL_WIDTH) / 2;
+        ownLeft.value = pillX.current;
+        ownWidth.value = width;
         // Beim Start und bei Größenänderung ohne Animation an den aktiven Tab setzen
         if (focused) movePill(pillX.current, false);
         onLayout?.(event);
@@ -156,15 +162,27 @@ export function TabBarButton({
     >
       <View className="h-7.5 w-14 items-center justify-center">
         <StyledAnimatedView style={iconStyle}>
-          <Icon as={icon} size="lg" className={cn(focused ? "text-primary" : "text-soft")} />
+          <StyledAnimatedView style={inactiveStyle}>
+            <Icon as={icon} size="lg" className="text-soft" />
+          </StyledAnimatedView>
+          <StyledAnimatedView className="absolute inset-0" style={activeStyle}>
+            <Icon as={icon} size="lg" className="text-primary" />
+          </StyledAnimatedView>
         </StyledAnimatedView>
       </View>
-      <Text
-        numberOfLines={1}
-        className={cn("text-xs", focused ? "font-extrabold text-primary" : "font-bold text-soft")}
-      >
-        {label}
-      </Text>
+      <View className="items-center">
+        <StyledAnimatedView style={inactiveStyle}>
+          <Text numberOfLines={1} className="text-xs font-bold text-soft">
+            {label}
+          </Text>
+        </StyledAnimatedView>
+        {/* Breiter als der Platzhalter: der fette Text darf etwas überstehen */}
+        <StyledAnimatedView className="absolute -inset-x-3 items-center" style={activeStyle}>
+          <Text numberOfLines={1} className="text-xs font-extrabold text-primary">
+            {label}
+          </Text>
+        </StyledAnimatedView>
+      </View>
     </Pressable>
   );
 }
