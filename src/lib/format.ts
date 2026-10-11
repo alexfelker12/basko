@@ -11,7 +11,10 @@ export function formatQuantity(quantity: number, unit: Unit): string {
   return formatNumber(quantity, quantityFractionDigits(unit));
 }
 
-/** Mengen-Chip im Einkaufsmodus, z. B. „6 Stk“, „1 kg“, „0,5 l“. */
+/**
+ * Mengen-Chip im Einkaufsmodus, z. B. „6 Stk“, „1 kg“, „0,5 l“. Mit geschütztem Leerzeichen:
+ * Zahl und Einheit dürfen nie auf zwei Zeilen landen.
+ */
 export function formatQuantityWithUnit(quantity: number, unit: Unit): string {
-  return `${formatNumber(quantity)} ${unitLabel(unit)}`;
+  return `${formatNumber(quantity)}\u00A0${unitLabel(unit)}`;
 }

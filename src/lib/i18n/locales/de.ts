@@ -82,7 +82,7 @@ const de = {
     add: "Zur Liste hinzufügen",
     added: "{name} hinzugefügt",
     deleteItem: "Löschen",
-    removeItem: "Eintrag entfernen",
+    removeItem: "Entfernen",
   },
   moreUnits: {
     title: "Weitere Einheiten",

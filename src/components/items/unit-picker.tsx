@@ -38,11 +38,17 @@ export function UnitPicker({ value, onChange, productName }: UnitPickerProps) {
               aria-checked={selected}
               onPress={() => onChange(unit)}
               className={cn(
-                "h-9.5 flex-1 items-center justify-center rounded-[999px]",
+                "h-9.5 items-center justify-center rounded-[999px]",
+                // Eine weitere Einheit („Packung“, „Scheibe“ …) ist so breit wie ihr Name,
+                // die kurzen Haupteinheiten teilen sich den Rest
+                isMoreUnit(unit) ? "px-3.5" : "flex-1",
                 selected && "bg-surface"
               )}
             >
-              <Text className={cn("text-sm", selected ? "font-extrabold" : "font-bold text-soft")}>
+              <Text
+                numberOfLines={1}
+                className={cn("text-sm", selected ? "font-extrabold" : "font-bold text-soft")}
+              >
                 {unitLabel(unit)}
               </Text>
             </Pressable>

@@ -8,20 +8,38 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
-import { LinearTransition, useAnimatedStyle } from "react-native-reanimated";
+import {
+  FadeInDown,
+  FadeOutDown,
+  interpolate,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 
 import { Icon } from "@/components/ui/icon";
 import { Toast, ToastAction, ToastTitle } from "@/components/ui/toast";
 import { StyledAnimatedView } from "@/components/ui/utils/animated";
 
 const DEFAULT_DURATION = 2500;
+/** Nach dem Loslassen bleibt ein angefasster Toast noch mindestens so lange stehen. */
+const MIN_REMAINING_AFTER_DRAG = 1500;
 /** Mehr Toasts gleichzeitig wären unübersichtlich – der älteste weicht. */
 const MAX_TOASTS = 3;
-/** Toasts sitzen 96 px über dem unteren Rand (`bottom-24`); über der Tastatur bleiben 12 px Luft. */
+/** Toasts sitzen 96 px über dem unteren Rand (`pb-24`); über der Tastatur bleiben 12 px Luft. */
 const BOTTOM_OFFSET = 96;
 const KEYBOARD_GAP = 12;
+/** Wegwischen: seitlich ab 30 % der Breite, nach unten ab 32 px – oder mit genug Schwung. */
+const SWIPE_X_RATIO = 0.3;
+const SWIPE_DOWN_DISTANCE = 32;
+const SWIPE_VELOCITY = 700;
+const SWIPE_OUT = { duration: 180 };
 
 export type ShowToastOptions = {
   title: string;
@@ -39,31 +57,62 @@ type ToastApi = {
   close: (id: number) => void;
 };
 
+/** Auto-Schließen je Toast; pausiert, solange der Toast angefasst wird. */
+type ToastTimer = { timeout?: ReturnType<typeof setTimeout>; endsAt: number; remaining: number };
+
 const ToastContext = createContext<ToastApi | null>(null);
 
 let nextToastId = 0;
 
 /**
  * Eigener Toast-Host (Spezifikation → Globale Muster → Toast): ein einziger Stapel am unteren Rand,
- * neue Toasts unten, ältere rücken mit gleichmäßigem Abstand nach oben; hebt sich über die Tastatur.
+ * neue Toasts unten, ältere darüber; hebt sich über die Tastatur. Wegwischen nach unten,
+ * links oder rechts.
  *
  * Liegt AUSSERHALB von GluestackUIProvider und rendert nach ihm – damit über allen
  * Overlay-Portalen (Sheets, Dialoge), egal in welcher Reihenfolge sie eingehängt wurden.
  */
 export function AppToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastEntry[]>([]);
-  const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
+  const timers = useRef(new Map<number, ToastTimer>());
 
   useEffect(() => {
     const pending = timers.current;
-    return () => pending.forEach(clearTimeout);
+    return () => pending.forEach((timer) => clearTimeout(timer.timeout));
   }, []);
 
   const close = useCallback((id: number) => {
-    clearTimeout(timers.current.get(id));
+    clearTimeout(timers.current.get(id)?.timeout);
     timers.current.delete(id);
     setToasts((current) => current.filter((toast) => toast.id !== id));
   }, []);
+
+  const schedule = useCallback(
+    (id: number, ms: number) => {
+      const timer = timers.current.get(id);
+      if (!timer) return;
+      clearTimeout(timer.timeout);
+      timer.endsAt = Date.now() + ms;
+      timer.timeout = setTimeout(() => close(id), ms);
+    },
+    [close]
+  );
+
+  const pause = useCallback((id: number) => {
+    const timer = timers.current.get(id);
+    if (!timer) return;
+    clearTimeout(timer.timeout);
+    timer.timeout = undefined;
+    timer.remaining = Math.max(timer.endsAt - Date.now(), 0);
+  }, []);
+
+  const resume = useCallback(
+    (id: number) => {
+      const timer = timers.current.get(id);
+      if (timer) schedule(id, Math.max(timer.remaining, MIN_REMAINING_AFTER_DRAG));
+    },
+    [schedule]
+  );
 
   const show = useCallback(
     ({ duration = DEFAULT_DURATION, ...options }: ShowToastOptions) => {
@@ -72,18 +121,16 @@ export function AppToastProvider({ children }: { children: ReactNode }) {
         const next = [...current, { ...options, id }];
         // Verdrängte Toasts brauchen keinen Timer mehr (die Löschung selbst läuft unabhängig weiter)
         next.slice(0, Math.max(next.length - MAX_TOASTS, 0)).forEach((old) => {
-          clearTimeout(timers.current.get(old.id));
+          clearTimeout(timers.current.get(old.id)?.timeout);
           timers.current.delete(old.id);
         });
         return next.slice(-MAX_TOASTS);
       });
-      timers.current.set(
-        id,
-        setTimeout(() => close(id), duration)
-      );
+      timers.current.set(id, { endsAt: 0, remaining: duration });
+      schedule(id, duration);
       return id;
     },
-    [close]
+    [schedule]
   );
 
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
@@ -98,29 +145,117 @@ export function AppToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ show, close }}>
       <View className="flex-1">
         {children}
+        {/* Bildschirmhoher Stapel, unten ausgerichtet: Seine Oberkante bleibt fest, wenn Toasts
+            gehen – so blenden sie an Ort und Stelle aus, statt erst nach unten zu rutschen. */}
         <StyledAnimatedView
           pointerEvents="box-none"
-          className="absolute inset-x-0 bottom-24 gap-2 px-3"
+          className="absolute inset-0 justify-end gap-2 px-3 pb-24"
           style={liftStyle}
         >
           {toasts.map((toast) => (
-            <Toast key={toast.id} layout={LinearTransition.duration(200)}>
-              {toast.withCheck ? <Icon as={CheckIcon} size="lg" className="text-bg" /> : null}
-              <ToastTitle>{toast.title}</ToastTitle>
-              {toast.action ? (
-                <ToastAction
-                  label={toast.action.label}
-                  onPress={() => {
-                    toast.action?.onPress();
-                    close(toast.id);
-                  }}
-                />
-              ) : null}
-            </Toast>
+            <SwipeableToast
+              key={toast.id}
+              toast={toast}
+              onDismiss={() => close(toast.id)}
+              onDragStart={() => pause(toast.id)}
+              onDragCancel={() => resume(toast.id)}
+            />
           ))}
         </StyledAnimatedView>
       </View>
     </ToastContext.Provider>
+  );
+}
+
+interface SwipeableToastProps {
+  toast: ToastEntry;
+  onDismiss: () => void;
+  onDragStart: () => void;
+  onDragCancel: () => void;
+}
+
+/** Ein Toast im Stapel: ein-/ausblenden, gleitet an seine Position, wegwischbar. */
+function SwipeableToast({ toast, onDismiss, onDragStart, onDragCancel }: SwipeableToastProps) {
+  const { width } = useWindowDimensions();
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  /** Achse des laufenden Wischs: 0 = noch offen, 1 = seitlich, 2 = senkrecht. */
+  const axis = useSharedValue(0);
+
+  const pan = Gesture.Pan()
+    .activeOffsetX([-12, 12])
+    .activeOffsetY(12)
+    .onStart(() => {
+      scheduleOnRN(onDragStart);
+    })
+    .onUpdate((event) => {
+      if (axis.get() === 0) {
+        axis.set(Math.abs(event.translationX) > Math.abs(event.translationY) ? 1 : 2);
+      }
+      if (axis.get() === 1) {
+        translateX.set(event.translationX);
+      } else {
+        // Nach oben nur mit deutlichem Widerstand
+        translateY.set(event.translationY > 0 ? event.translationY : event.translationY * 0.15);
+      }
+    })
+    .onEnd((event) => {
+      const dismiss = (finished?: boolean) => {
+        "worklet";
+        if (finished) scheduleOnRN(onDismiss);
+      };
+
+      if (axis.get() === 1) {
+        const x = translateX.get();
+        if (Math.abs(x) > width * SWIPE_X_RATIO || Math.abs(event.velocityX) > SWIPE_VELOCITY) {
+          const direction = x !== 0 ? Math.sign(x) : Math.sign(event.velocityX) || 1;
+          translateX.set(withTiming(direction * width, SWIPE_OUT, dismiss));
+          return;
+        }
+      } else if (translateY.get() > SWIPE_DOWN_DISTANCE || event.velocityY > SWIPE_VELOCITY) {
+        translateY.set(withTiming(translateY.get() + 120, SWIPE_OUT, dismiss));
+        return;
+      }
+
+      translateX.set(withSpring(0));
+      translateY.set(withSpring(0));
+      scheduleOnRN(onDragCancel);
+    })
+    .onFinalize(() => {
+      axis.set(0);
+    });
+
+  const dragStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(
+      interpolate(Math.abs(translateX.get()), [0, width * 0.6], [1, 0], "clamp"),
+      interpolate(translateY.get(), [0, 120], [1, 0], "clamp")
+    ),
+    transform: [{ translateX: translateX.get() }, { translateY: translateY.get() }],
+  }));
+
+  return (
+    // Außen: Ein-/Ausblenden und Nachrutschen; innen: Wischen (getrennt, sonst kollidieren die Transforms)
+    <StyledAnimatedView
+      entering={FadeInDown.duration(200)}
+      exiting={FadeOutDown.duration(180)}
+      layout={LinearTransition.duration(200)}
+    >
+      <GestureDetector gesture={pan}>
+        <Toast style={dragStyle}>
+          {toast.withCheck ? <Icon as={CheckIcon} size="lg" className="text-bg" /> : null}
+          <ToastTitle>{toast.title}</ToastTitle>
+          {toast.action ? (
+            <ToastAction
+              label={toast.action.label}
+              onPress={() => {
+                toast.action?.onPress();
+                onDismiss();
+              }}
+            />
+          ) : null}
+        </Toast>
+      </GestureDetector>
+    </StyledAnimatedView>
   );
 }
 
