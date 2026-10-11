@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 import { Icon } from "@/components/ui/icon";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { cn } from "@gluestack-ui/utils/nativewind-utils";
 
@@ -12,9 +13,14 @@ interface ActionItemProps {
   onPress: () => void;
   danger?: boolean;
   disabled?: boolean;
+  /** Läuft gerade (z. B. Export): Spinner rechts, Tippen wirkt nicht. */
+  loading?: boolean;
 }
 
-/** Eintrag in Aktionen-Sheets (1e, 4f): runder Icon-Kreis auf `chip`, Titel, optional Beschreibung. */
+/**
+ * Eintrag in Aktionen-Sheets (1e, 4f): runder Icon-Kreis auf `chip`, Titel, optional Beschreibung,
+ * optional Spinner rechts.
+ */
 export function ActionItem({
   icon,
   title,
@@ -22,13 +28,15 @@ export function ActionItem({
   onPress,
   danger,
   disabled,
+  loading,
 }: ActionItemProps) {
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled}
+      disabled={disabled || loading}
       role="button"
       aria-disabled={disabled}
+      aria-busy={loading}
       className={cn(
         "min-h-14 flex-row items-center gap-3.5 px-page py-2 active:bg-chip",
         disabled && "opacity-40"
@@ -41,6 +49,7 @@ export function ActionItem({
         <Text className={cn("text-base font-bold", danger && "text-danger")}>{title}</Text>
         {description ? <Text className="text-xs text-soft">{description}</Text> : null}
       </View>
+      {loading ? <Spinner size="small" className="text-primary" /> : null}
     </Pressable>
   );
 }

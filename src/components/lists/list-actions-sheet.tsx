@@ -23,6 +23,8 @@ interface ListActionsSheetProps {
   onRename: () => void;
   onSend: () => void;
   onExport: () => void;
+  /** Die Exportdatei wird gerade erstellt – Spinner in der Zeile, das Menü bleibt offen. */
+  exporting: boolean;
   onDuplicate: () => void;
   onDelete: () => void;
 }
@@ -35,6 +37,7 @@ export function ListActionsSheet({
   onRename,
   onSend,
   onExport,
+  exporting,
   onDuplicate,
   onDelete,
 }: ListActionsSheetProps) {
@@ -70,6 +73,7 @@ export function ListActionsSheet({
             title={t("listActions.export.title")}
             description={t("listActions.export.description")}
             onPress={onExport}
+            loading={exporting}
           />
           <ActionItem
             icon={CopyIcon}

@@ -85,9 +85,29 @@ export default function ListsScreen() {
   };
 
   const closeMenuThen = (action: (list: ListSummary) => void) => () => {
+    // Während der Export läuft, bleibt das Menü stehen
+    if (exportList.isPending) return;
     const list = menuList;
     setMenuList(null);
     if (list) action(list);
+  };
+
+  /**
+   * „Als Datei exportieren“: Das Menü bleibt mit Spinner offen, bis die Datei fertig ist, und
+   * schließt sich direkt vor dem Teilen-Menü.
+   */
+  const exportMenuList = () => {
+    if (!menuList || exportList.isPending) return;
+    exportList.mutate(
+      { listId: menuList.id, onReady: () => setMenuList(null) },
+      {
+        onError: (error) => {
+          console.warn("[transfer] export", error);
+          showToast({ title: t("errors.generic") });
+        },
+        onSettled: () => setMenuList(null),
+      }
+    );
   };
 
   const create = (values: ListFormValues) => {
@@ -186,14 +206,8 @@ export default function ListsScreen() {
         onSend={closeMenuThen((list) =>
           router.push({ pathname: "/transfer/send/[listId]", params: { listId: list.id } })
         )}
-        onExport={closeMenuThen((list) =>
-          exportList.mutate(list.id, {
-            onError: (error) => {
-              console.warn("[transfer] export", error);
-              showToast({ title: t("errors.generic") });
-            },
-          })
-        )}
+        onExport={exportMenuList}
+        exporting={exportList.isPending}
         onDuplicate={closeMenuThen((list) => duplicateList.mutate(list.id))}
         onDelete={closeMenuThen(deleteList)}
       />
