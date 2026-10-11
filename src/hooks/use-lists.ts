@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { ListColor } from "@/lib/list-colors";
+import { localQuery } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
   createList,
@@ -13,11 +14,11 @@ import {
 } from "@/lib/queries/lists";
 
 export function useLists() {
-  return useQuery({ queryKey: queryKeys.lists, queryFn: getLists });
+  return useQuery(localQuery(queryKeys.lists, getLists));
 }
 
 export function useListSummary(id: string) {
-  return useQuery({ queryKey: queryKeys.list(id), queryFn: () => getListSummary(id) });
+  return useQuery(localQuery(queryKeys.list(id), () => getListSummary(id)));
 }
 
 /** Mutation auf lokale DB; danach alle Listen-Abfragen neu laden. */

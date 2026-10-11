@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { localQuery } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
   createProduct,
@@ -12,14 +13,15 @@ import {
 } from "@/lib/queries/products";
 
 export function useCatalog() {
-  return useQuery({ queryKey: queryKeys.catalog, queryFn: getCatalog });
+  return useQuery(localQuery(queryKeys.catalog, getCatalog));
 }
 
 /** Fotos eines Produkts (Dateinamen in Reihenfolge); `null` = nichts laden. */
 export function useProductImages(productId: string | null) {
   return useQuery({
-    queryKey: queryKeys.productImages(productId ?? ""),
-    queryFn: () => getProductImages(productId ?? ""),
+    ...localQuery(queryKeys.productImages(productId ?? ""), () =>
+      productId === null ? [] : getProductImages(productId)
+    ),
     enabled: productId !== null,
   });
 }
@@ -27,8 +29,9 @@ export function useProductImages(productId: string | null) {
 /** In wie vielen Listen das Produkt steht (Löschen-Dialog 4f); `null` = nichts laden. */
 export function useProductListCount(productId: string | null) {
   return useQuery({
-    queryKey: queryKeys.productListCount(productId ?? ""),
-    queryFn: () => getProductListCount(productId ?? ""),
+    ...localQuery(queryKeys.productListCount(productId ?? ""), () =>
+      productId === null ? 0 : getProductListCount(productId)
+    ),
     enabled: productId !== null,
   });
 }

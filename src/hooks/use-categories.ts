@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { localQuery } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
   createCategory,
@@ -12,7 +13,7 @@ import {
 
 /** Alle Kategorien in Ladenreihenfolge, „Sonstiges“ zuletzt. */
 export function useCategories() {
-  return useQuery({ queryKey: queryKeys.categories, queryFn: getCategories });
+  return useQuery(localQuery(queryKeys.categories, getCategories));
 }
 
 /** Kategorien bestimmen Sortierung und Überschriften aller Listen – beides neu laden. */

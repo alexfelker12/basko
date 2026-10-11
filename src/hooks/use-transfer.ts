@@ -3,6 +3,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useZeroconf } from "react-native-zeroconf";
 
 import { collator } from "@/lib/i18n";
+import { localQuery } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import { clearTransferHistory, getTransferHistory } from "@/lib/queries/transfer-history";
 import { exportListFile } from "@/lib/transfer/file";
@@ -26,7 +27,7 @@ export function useTransfer() {
 }
 
 export function useTransferHistory() {
-  return useQuery({ queryKey: queryKeys.transferHistory, queryFn: getTransferHistory });
+  return useQuery(localQuery(queryKeys.transferHistory, getTransferHistory));
 }
 
 export function useClearTransferHistory() {
