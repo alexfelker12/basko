@@ -113,8 +113,8 @@ export default function ProductsScreen() {
       className="flex-1 bg-bg"
       onLayout={(event) => setScreenHeight(event.nativeEvent.layout.height)}
     >
-      {/* Hintergrundmuster – VORLÄUFIG zum Vergleich, siehe ScreenPattern */}
-      <ScreenPattern variant="dotgrid" />
+      {/* Hintergrundmuster (Punktraster) hinter dem Inhalt */}
+      <ScreenPattern />
       <ScreenHeader title={t("products.title")}>
         <ViewToggle
           value={productsView}

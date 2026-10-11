@@ -103,8 +103,8 @@ export default function ListsScreen() {
 
   return (
     <View className="flex-1 bg-bg">
-      {/* Hintergrundmuster – VORLÄUFIG zum Vergleich, siehe ScreenPattern */}
-      <ScreenPattern variant="scatter" />
+      {/* Hintergrundmuster (Punktraster) hinter dem Inhalt */}
+      <ScreenPattern />
       <ScreenHeader title={t("lists.title")}>
         {/* Einstellungen (8a) – vorerst nur mit der Ladenreihenfolge, der Rest folgt in Phase 6 */}
         <Button

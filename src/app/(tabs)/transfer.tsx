@@ -37,8 +37,8 @@ export default function TransferScreen() {
 
   return (
     <View className="flex-1 bg-bg">
-      {/* Hintergrundmuster – VORLÄUFIG zum Vergleich, siehe ScreenPattern */}
-      <ScreenPattern variant="fibers" />
+      {/* Hintergrundmuster (Punktraster) hinter dem Inhalt */}
+      <ScreenPattern />
       <ScreenHeader title={t("transfer.title")} />
 
       <ScrollView contentContainerClassName="pb-6">
