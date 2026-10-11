@@ -188,25 +188,38 @@ function SwipeableToast({ toast, onDismiss, onDragStart, onDragCancel }: Swipeab
   const translateY = useSharedValue(0);
   /** Achse des laufenden Wischs: 1 = seitlich, 2 = nach unten – beim Start festgelegt. */
   const axis = useSharedValue(0);
+  /**
+   * Bewegung zählt ab dem Aufsetzen des Fingers, über die absoluten Koordinaten: Android setzt
+   * `translationX/Y` beim Aktivieren der Geste auf 0 zurück – darüber ließ sich die Richtung
+   * nicht erkennen (jeder Wisch galt als „nach unten“).
+   */
+  const touchStartX = useSharedValue(0);
+  const touchStartY = useSharedValue(0);
   /** Weg bis zum Start – wird abgezogen, damit der Toast nicht um die Schwelle springt. */
   const startOffset = useSharedValue(0);
 
   const pan = Gesture.Pan()
     .activeOffsetX([-ACTIVATE_X, ACTIVATE_X])
     .activeOffsetY(ACTIVATE_DOWN)
+    .onBegin((event) => {
+      touchStartX.set(event.absoluteX);
+      touchStartY.set(event.absoluteY);
+    })
     .onStart((event) => {
+      const dx = event.absoluteX - touchStartX.get();
+      const dy = event.absoluteY - touchStartY.get();
       // Seitlich gewinnt, sobald die Seitwärtsbewegung ihre (kleinere) Schwelle erreicht hat
-      const horizontal = Math.abs(event.translationX) >= ACTIVATE_X;
+      const horizontal = Math.abs(dx) >= ACTIVATE_X;
       axis.set(horizontal ? 1 : 2);
-      startOffset.set(horizontal ? event.translationX : event.translationY);
+      startOffset.set(horizontal ? dx : dy);
       scheduleOnRN(onDragStart);
     })
     .onUpdate((event) => {
       if (axis.get() === 1) {
-        translateX.set(event.translationX - startOffset.get());
+        translateX.set(event.absoluteX - touchStartX.get() - startOffset.get());
       } else {
         // Nach oben nur mit deutlichem Widerstand
-        const y = event.translationY - startOffset.get();
+        const y = event.absoluteY - touchStartY.get() - startOffset.get();
         translateY.set(y > 0 ? y : y * 0.15);
       }
     })
