@@ -75,7 +75,7 @@ export function ListActionsSheet({
   const shownList = useLastDefined(list);
 
   return (
-    <Sheet isOpen={list !== null} onClose={onClose}>
+    <Sheet isOpen={list !== null} onDismiss={onClose}>
       {shownList ? (
         <View className="pb-2">
           <View className="mb-1 border-b border-line px-page pb-3.5 pt-2">

@@ -141,6 +141,8 @@ export function SwipeRow({
   const rowStyle = useAnimatedStyle(() => ({ transform: [{ translateX: translateX.get() }] }));
   const actionStyle = useAnimatedStyle(() => ({
     width: Math.max(actionWidth, -translateX.get()),
+    // Erst sichtbar, wenn die Zeile verschoben ist – sonst blitzt die Aktion beim Einblenden auf
+    opacity: translateX.get() < 0 ? 1 : 0,
   }));
 
   const onLayout = (event: LayoutChangeEvent) => rowWidth.set(event.nativeEvent.layout.width);

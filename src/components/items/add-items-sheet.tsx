@@ -63,6 +63,15 @@ export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem
   const otherCategoryName = useOtherCategoryName() ?? "";
 
   const itemStep = useLastDefined(step.kind === "add" || step.kind === "edit" ? step : null);
+
+  // Nie zwei Sheets gleichzeitig: das nächste öffnet erst, wenn das vorige ganz zu ist.
+  // (Gleichzeitig schließen/öffnen samt Tastatur ließ das neue Sheet sofort wieder zugehen.)
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [itemVisible, setItemVisible] = useState(false);
+  const searchOpen = step.kind === "search" && !itemVisible;
+  const itemOpen = (step.kind === "add" || step.kind === "edit") && !searchVisible;
+  if (searchOpen && !searchVisible) setSearchVisible(true);
+  if (itemOpen && !itemVisible) setItemVisible(true);
   const itemIdsByProduct = new Map(items.map((item) => [item.productId, item.id]));
   const close = () => onStepChange({ kind: "closed" });
   const backToSearch = () => onStepChange({ kind: "search" });
@@ -92,14 +101,14 @@ export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem
     }
   };
 
-  /** Schließen per Wischen/Zurück – nur wenn dieses Sheet gerade das aktive ist. */
-  const closeIf = (kind: AddItemsStep["kind"][]) => () => {
-    if (kind.includes(step.kind)) close();
-  };
-
   return (
     <>
-      <Sheet isOpen={step.kind === "search"} onClose={closeIf(["search"])} fullHeight>
+      <Sheet
+        isOpen={searchOpen}
+        onDismiss={close}
+        onClosed={() => setSearchVisible(false)}
+        fullHeight
+      >
         <ProductSearch
           query={query}
           onQueryChange={setQuery}
@@ -109,7 +118,7 @@ export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem
         />
       </Sheet>
 
-      <Sheet isOpen={step.kind === "add" || step.kind === "edit"} onClose={closeIf(["add", "edit"])}>
+      <Sheet isOpen={itemOpen} onDismiss={close} onClosed={() => setItemVisible(false)}>
         {itemStep?.kind === "add" ? (
           <ItemForm
             key={itemStep.product.id ?? `new:${itemStep.product.name}`}

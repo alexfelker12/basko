@@ -120,7 +120,8 @@ function ResultRow({ result, onPress }: { result: ProductSearchResult; onPress: 
             <BadgeText>{t("search.inList")}</BadgeText>
           </Badge>
         ) : null}
-        {result.recent ? (
+        {/* „in Liste“ sagt mehr – dann kein zweiter Hinweis „zuletzt genutzt“ */}
+        {result.recent && !result.listItemId ? (
           <Badge>
             <BadgeText>{t("search.recent")}</BadgeText>
           </Badge>

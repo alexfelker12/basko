@@ -20,8 +20,13 @@ function SheetBackdrop(props: BottomSheetBackdropProps) {
 
 interface SheetProps {
   isOpen: boolean;
-  /** Wird aufgerufen, sobald das Sheet zu ist – auch nach Wegwischen, Zurück oder Tipp daneben. */
-  onClose: () => void;
+  /**
+   * Nur wenn die Nutzerin das Sheet selbst schließt (Wischen, Tipp daneben, Zurück) –
+   * der Aufrufer setzt dann seinen Zustand auf „zu“. Nicht bei `isOpen = false`.
+   */
+  onDismiss: () => void;
+  /** Nach jeder abgeschlossenen Schließ-Animation, z. B. um das nächste Sheet zu öffnen. */
+  onClosed?: () => void;
   /** 90 % Höhe mit scrollbarem Inhalt (z. B. `BottomSheetScrollView`) statt Höhe nach Inhalt. */
   fullHeight?: boolean;
   children: ReactNode;
@@ -31,17 +36,33 @@ interface SheetProps {
  * Sheet mit Griff auf Basis des gluestack BottomSheet (@gorhom/bottom-sheet), gesteuert über `isOpen`.
  * Eingabefelder darin heben das Sheet über die Tastatur (`useSheetKeyboardHandlers`).
  */
-export function Sheet({ isOpen, onClose, fullHeight = false, children }: SheetProps) {
+export function Sheet({ isOpen, onDismiss, onClosed, fullHeight = false, children }: SheetProps) {
   const ref = useRef<BottomSheetRef>(null);
+  const isOpenRef = useRef(isOpen);
+  const onDismissRef = useRef(onDismiss);
+  const onClosedRef = useRef(onClosed);
   const { top } = useSafeAreaInsets();
+
+  // Immer die aktuellen Werte – gorhom ruft den Schließ-Callback erst nach der Animation auf
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+    onDismissRef.current = onDismiss;
+    onClosedRef.current = onClosed;
+  });
 
   useEffect(() => {
     if (isOpen) ref.current?.open();
     else ref.current?.close();
   }, [isOpen]);
 
+  const handleClosed = () => {
+    onClosedRef.current?.();
+    // Steht der Aufrufer noch auf „offen“, hat die Nutzerin das Sheet geschlossen
+    if (isOpenRef.current) onDismissRef.current();
+  };
+
   return (
-    <BottomSheet ref={ref} onClose={onClose}>
+    <BottomSheet ref={ref} onClose={handleClosed}>
       <BottomSheetPortal
         snapPoints={fullHeight ? FULL_HEIGHT_SNAP_POINTS : undefined}
         enableDynamicSizing={!fullHeight}

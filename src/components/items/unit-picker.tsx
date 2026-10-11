@@ -88,7 +88,7 @@ function MoreUnitsSheet({ isOpen, value, productName, onClose, onSelect }: MoreU
   const rows = [0, 3, 6, 9].map((start) => units.slice(start, start + 3));
 
   return (
-    <Sheet isOpen={isOpen} onClose={onClose}>
+    <Sheet isOpen={isOpen} onDismiss={onClose}>
       <View className="gap-4 px-page pb-4">
         <View className="flex-row items-baseline justify-between">
           <Text className="text-lg font-extrabold">{t("moreUnits.title")}</Text>

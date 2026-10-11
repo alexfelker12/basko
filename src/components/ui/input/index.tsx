@@ -22,7 +22,7 @@ const UIInput = createInput({
 // Basko: Input / Suchleiste – Radius 14, Fokus = 2 px primary-Rahmen.
 // Größen: default = 48 (Spezifikation), sm = 44 (z. B. Inline-Umbenennen, gleich hoch wie die Listenzeile).
 const inputStyle = tva({
-  base: 'w-full flex-row items-center gap-2.5 overflow-hidden rounded-card border border-line bg-surface px-2.5 data-[focus=true]:border-2 data-[focus=true]:border-primary data-[focus=true]:web:outline-none data-[invalid=true]:border-danger data-[disabled=true]:opacity-50 data-[disabled=true]:pointer-events-none',
+  base: 'w-full flex-row items-center gap-2.5 overflow-hidden rounded-card border-2 border-line bg-surface px-2.5 data-[focus=true]:border-2 data-[focus=true]:border-primary data-[focus=true]:web:outline-none data-[invalid=true]:border-danger data-[disabled=true]:opacity-50 data-[disabled=true]:pointer-events-none',
   variants: {
     size: {
       default: 'h-12',

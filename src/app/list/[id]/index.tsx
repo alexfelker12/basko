@@ -190,7 +190,7 @@ export default function ShopScreen() {
       )}
 
       {/* Schnell-Bearbeiten (2c): gespeichert wird erst mit „Fertig“, Wegwischen verwirft */}
-      <Sheet isOpen={quickEdit !== null} onClose={() => setQuickEdit(null)}>
+      <Sheet isOpen={quickEdit !== null} onDismiss={() => setQuickEdit(null)}>
         {shownQuickEdit ? (
           <ItemForm
             key={shownQuickEdit.id}
