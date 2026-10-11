@@ -33,6 +33,9 @@ import { Overlay } from '@gluestack-ui/core/overlay/creator';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+/** Basko: Weg in px, ab dem ein gezoomtes Bild verschoben wird (darunter zählt es als Tipp). */
+const PAN_ACTIVATION_DISTANCE = 10;
+
 const AnimatedView = Animated.createAnimatedComponent(View);
 const AnimatedImage = Animated.createAnimatedComponent(RNImage);
 
@@ -198,11 +201,30 @@ const ZoomableImage = React.memo(
     // Pan gesture for when zoomed - allows free movement with edge detection
     // Basko: `.enabled(scale.get() > 1)` wurde nur beim Rendern ausgewertet (die Zeile ist memoisiert)
     // – gezoomt ließ sich das Bild dann nicht verschieben. Jetzt entscheidet die Geste beim Anfassen.
+    // Basko: Verschieben startet erst ab ein paar Pixeln Weg – sonst gewann das Verschieben schon
+    // beim ersten Antippen, und ein Doppeltipp im gezoomten Bild setzte den Zoom nicht zurück.
+    const panStartX = useSharedValue(0);
+    const panStartY = useSharedValue(0);
     const panGesture = Gesture.Pan()
       .manualActivation(true)
-      .onTouchesMove((_event, state) => {
-        if (scale.get() > 1) state.activate();
-        else state.fail();
+      .onTouchesDown((event) => {
+        const touch = event.allTouches[0];
+        if (!touch) return;
+        panStartX.set(touch.absoluteX);
+        panStartY.set(touch.absoluteY);
+      })
+      .onTouchesMove((event, state) => {
+        if (scale.get() <= 1) {
+          state.fail();
+          return;
+        }
+        const touch = event.allTouches[0];
+        if (!touch) return;
+        const distance = Math.hypot(
+          touch.absoluteX - panStartX.get(),
+          touch.absoluteY - panStartY.get()
+        );
+        if (distance > PAN_ACTIVATION_DISTANCE) state.activate();
       })
       .onUpdate((event) => {
         // Calculate max translation bounds for zoomed image
@@ -415,14 +437,10 @@ const SlidableImageGallery = React.memo(function SlidableImageGallery({
   }, [currentIndex]);
 
   // Handle scroll - track position without updating state
-  const handleScroll = useCallback((event: any) => {
-    scrollOffsetRef.current = event.nativeEvent.contentOffset.x;
-  }, []);
-
-  // Handle scroll end - update index when scroll completes
-  const handleMomentumScrollEnd = useCallback(
-    (event: any) => {
-      const contentOffsetX = event.nativeEvent.contentOffset.x;
+  // Basko: Index schon beim Wischen nachführen (sobald das nächste Bild zur Hälfte sichtbar ist),
+  // nicht erst am Ende des Schwungs – sonst hinkten Punkte und Zähler spürbar hinterher.
+  const syncIndexToOffset = useCallback(
+    (contentOffsetX: number) => {
       const newIndex = Math.round(contentOffsetX / SCREEN_WIDTH);
 
       if (
@@ -436,6 +454,20 @@ const SlidableImageGallery = React.memo(function SlidableImageGallery({
       }
     },
     [localIndex, images.length, onIndexChange]
+  );
+
+  const handleScroll = useCallback(
+    (event: any) => {
+      scrollOffsetRef.current = event.nativeEvent.contentOffset.x;
+      syncIndexToOffset(event.nativeEvent.contentOffset.x);
+    },
+    [syncIndexToOffset]
+  );
+
+  // Handle scroll end - update index when scroll completes
+  const handleMomentumScrollEnd = useCallback(
+    (event: any) => syncIndexToOffset(event.nativeEvent.contentOffset.x),
+    [syncIndexToOffset]
   );
 
   const goNext = useCallback(() => {
