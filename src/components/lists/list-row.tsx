@@ -1,0 +1,103 @@
+import { CheckIcon, EllipsisIcon } from "lucide-react-native";
+import { useState } from "react";
+import { Pressable, View } from "react-native";
+
+import { ListColorBar } from "@/components/list-color-bar";
+import { Button, ButtonIcon } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { Input, InputField } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
+import { t } from "@/lib/i18n";
+import type { ListColor } from "@/lib/list-colors";
+import type { ListSummary } from "@/lib/queries/lists";
+import { cn } from "@gluestack-ui/utils/nativewind-utils";
+
+/** Farbbalken, Name und „{n} Produkte“ – auch als Kopf im Menü (1e) und Vorschau im Farbdialog (3g). */
+export function ListRowContent({
+  name,
+  color,
+  itemCount,
+  large,
+}: {
+  name: string;
+  color: ListColor;
+  itemCount: number;
+  large?: boolean;
+}) {
+  return (
+    <View className="flex-1 flex-row items-center gap-3.5">
+      <ListColorBar color={color} />
+      <View className="min-w-0 flex-1">
+        <Text numberOfLines={1} className={cn("font-bold", large ? "text-lg" : "text-base")}>
+          {name}
+        </Text>
+        <Text className="mt-0.5 text-xs text-soft">
+          {t("lists.productCount", { count: itemCount })}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+interface ListRowProps {
+  list: ListSummary;
+  onPress: () => void;
+  onLongPress: () => void;
+  onMorePress: () => void;
+}
+
+/** ListRow (1a): Tipp öffnet den Einkaufsmodus, langer Druck benennt um, „···“ öffnet das Menü. */
+export function ListRow({ list, onPress, onLongPress, onMorePress }: ListRowProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      className="mx-page flex-row items-center gap-3 border-b border-line py-row active:opacity-70"
+    >
+      <ListRowContent name={list.name} color={list.color} itemCount={list.itemCount} />
+      <Pressable
+        onPress={onMorePress}
+        role="button"
+        aria-label={t("lists.actions", { name: list.name })}
+        className="-mr-2.5 size-11 items-center justify-center"
+      >
+        <Icon as={EllipsisIcon} size="lg" className="text-soft" />
+      </Pressable>
+    </Pressable>
+  );
+}
+
+interface ListRenameRowProps {
+  list: ListSummary;
+  onSubmit: (name: string) => void;
+  onCancel: () => void;
+}
+
+/**
+ * Inline-Umbenennen (1d): gespeichert wird nur mit Haken oder Enter.
+ * Tastatur schließen, daneben tippen oder Zurück verwirft die Änderung.
+ */
+export function ListRenameRow({ list, onSubmit, onCancel }: ListRenameRowProps) {
+  const [name, setName] = useState(list.name);
+
+  return (
+    <View className="mx-page flex-row items-center gap-3 border-b border-line py-row">
+      <ListColorBar color={list.color} />
+      <Input className="flex-1">
+        <InputField
+          autoFocus
+          value={name}
+          onChangeText={setName}
+          onSubmitEditing={() => onSubmit(name)}
+          onBlur={onCancel}
+          selectTextOnFocus
+          returnKeyType="done"
+          aria-label={t("lists.nameInput")}
+        />
+      </Input>
+      <Button size="icon" onPress={() => onSubmit(name)} aria-label={t("lists.saveName")}>
+        <ButtonIcon as={CheckIcon} />
+      </Button>
+    </View>
+  );
+}

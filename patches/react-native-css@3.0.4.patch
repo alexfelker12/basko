@@ -1,0 +1,42 @@
+diff --git a/dist/commonjs/metro/metro-transformer.js b/dist/commonjs/metro/metro-transformer.js
+index 7aa9d00f7033199efde3a6e38ddd098ace6a28a6..451a6430d773c6bdce31560f6275726a413a1252 100644
+--- a/dist/commonjs/metro/metro-transformer.js
++++ b/dist/commonjs/metro/metro-transformer.js
+@@ -21,7 +21,8 @@ async function transform(config, projectRoot, filePath, data, options) {
+   });
+   const css = cssFile.output[0].data.css.code.toString();
+   const productionJS = (0, _index.compile)(css, {
+-    ...options.reactNativeCSS,
++    // Basko-Patch: Metro übergibt `transformer.reactNativeCSS` im Config-Objekt, nicht in den Transform-Optionen.
++    ...(config.reactNativeCSS ?? options.reactNativeCSS),
+     filename: filePath,
+     projectRoot: projectRoot
+   }).stylesheet();
+diff --git a/dist/module/metro/metro-transformer.js b/dist/module/metro/metro-transformer.js
+index 7293ae17ef66005304e8740b9e1f9d097afcb79b..4728d5d0fc7394d44d8cba6ed7cd64e57f15d43e 100644
+--- a/dist/module/metro/metro-transformer.js
++++ b/dist/module/metro/metro-transformer.js
+@@ -17,7 +17,8 @@ export async function transform(config, projectRoot, filePath, data, options) {
+   });
+   const css = cssFile.output[0].data.css.code.toString();
+   const productionJS = compile(css, {
+-    ...options.reactNativeCSS,
++    // Basko-Patch: Metro übergibt `transformer.reactNativeCSS` im Config-Objekt, nicht in den Transform-Optionen.
++    ...(config.reactNativeCSS ?? options.reactNativeCSS),
+     filename: filePath,
+     projectRoot: projectRoot
+   }).stylesheet();
+diff --git a/src/metro/metro-transformer.ts b/src/metro/metro-transformer.ts
+index e935ba67f726dcc464742cf800191b4eaf393a7f..374a9620f9c23693f26318e206ea209bf2e3c2f2 100644
+--- a/src/metro/metro-transformer.ts
++++ b/src/metro/metro-transformer.ts
+@@ -37,7 +37,8 @@ export async function transform(
+   const css = cssFile.output[0].data.css.code.toString();
+ 
+   const productionJS = compile(css, {
+-    ...options.reactNativeCSS,
++    // Basko-Patch: Metro übergibt `transformer.reactNativeCSS` im Config-Objekt, nicht in den Transform-Optionen.
++    ...((config as { reactNativeCSS?: CompilerOptions }).reactNativeCSS ?? options.reactNativeCSS),
+     filename: filePath,
+     projectRoot: projectRoot,
+   }).stylesheet();

@@ -13,7 +13,7 @@ import { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 const useToast = createToastHook(View);
 
 const toastStyle = tva({
-  base: 'min-h-[52px] flex-row items-center gap-2.5 rounded-card bg-ink py-2 pl-4 pr-1.5 web:pointer-events-auto',
+  base: 'min-h-13 flex-row items-center gap-2.5 rounded-card bg-ink py-2 pl-4 pr-1.5 web:pointer-events-auto',
 });
 
 const toastTitleStyle = tva({
@@ -21,7 +21,7 @@ const toastTitleStyle = tva({
 });
 
 const toastDescriptionStyle = tva({
-  base: 'font-sans text-[13px] font-medium text-bg',
+  base: 'font-sans text-sm font-medium text-bg',
 });
 
 const toastActionStyle = tva({

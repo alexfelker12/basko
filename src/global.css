@@ -72,7 +72,7 @@
   --color-list-blue: #3E6B8A;
   --color-list-purple: #7A5CA3;
 
-  /* Maße: Radius 14 (Karten, Sheets, Eingaben), 10 (Vorschaubilder), 999 = rounded-full */
+  /* Maße: Radius 14 (Karten, Sheets, Eingaben), 10 (Vorschaubilder), 999 = rounded-[999px] */
   --radius-card: 14px;
   --radius-thumb: 10px;
   /* Seitenabstand 18, Zeilen-Padding 13 */

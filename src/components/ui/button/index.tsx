@@ -25,7 +25,7 @@ const UIButton = createButton({
 // Basko: Button primary / secondary / destructive (Höhe 44, Radius 999),
 // Icon-Button rund 44 × 44 (size="icon"), Footer-Buttons in Modals 40 (size="sm").
 const buttonStyle = tva({
-  base: 'rounded-full flex-row items-center justify-center gap-2 data-[focus-visible=true]:web:outline-none data-[focus-visible=true]:web:ring-2 data-[disabled=true]:opacity-40',
+  base: 'rounded-[999px] flex-row items-center justify-center gap-2 data-[focus-visible=true]:web:outline-none data-[focus-visible=true]:web:ring-2 data-[disabled=true]:opacity-40',
   variants: {
     variant: {
       primary: 'bg-primary data-[active=true]:opacity-85',
@@ -52,9 +52,9 @@ const buttonTextStyle = tva({
       link: 'text-primary',
     },
     size: {
-      default: 'text-[15px]',
+      default: 'text-base',
       sm: 'text-sm',
-      icon: 'text-[15px]',
+      icon: 'text-base',
     },
   },
 });

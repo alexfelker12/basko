@@ -73,7 +73,7 @@ const actionsheetItemStyle = tva({
 });
 
 const actionsheetItemTextStyle = tva({
-  base: 'font-sans text-[15px] font-bold text-ink',
+  base: 'font-sans text-base font-bold text-ink',
   variants: {
     isTruncated: {
       true: '',
@@ -91,7 +91,7 @@ const actionsheetItemTextStyle = tva({
 });
 
 const actionsheetDragIndicatorStyle = tva({
-  base: 'h-1 w-9 rounded-full bg-soft/45',
+  base: 'h-1 w-9 rounded-[999px] bg-soft/45',
 });
 
 const actionsheetDragIndicatorWrapperStyle = tva({

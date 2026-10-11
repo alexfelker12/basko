@@ -30,9 +30,11 @@ Basko ist eine private Einkaufslisten-App (Expo / React Native) für Android und
 
 ### Noch zu installieren (laut Spezifikation)
 
-`expo-image-picker`, `expo-document-picker`, `expo-keep-awake`, `expo-haptics`, `buffer` – jeweils in der Phase, die sie braucht. `react-native-awesome-gallery` wird durch den gluestack Image Viewer ersetzt (Phase 3).
+`expo-image-picker`, `expo-document-picker`, `buffer` – jeweils in der Phase, die sie braucht. `react-native-awesome-gallery` wird durch den gluestack Image Viewer ersetzt (Phase 3).
 
-Seit Phase 1 vorhanden: `@expo-google-fonts/manrope`, `expo-localization`, `expo-navigation-bar` (Navigationsleiste folgt dem Thema), dev: `drizzle-kit`, `babel-plugin-inline-import`. `expo-secure-store` ist entfernt.
+Vorhanden: `@expo-google-fonts/manrope`, `expo-localization`, `expo-navigation-bar` (Navigationsleiste folgt dem Thema), `expo-haptics`, `expo-keep-awake`, dev: `drizzle-kit`, `babel-plugin-inline-import`. `expo-secure-store` ist entfernt.
+
+**Patch `react-native-css@3.0.4`** (`patches/`, eingetragen in `pnpm-workspace.yaml`): Der Metro-Transformer las `inlineRem` aus dem falschen Objekt, dadurch galt rem = 14 statt 16 (`text-base` war 14 px, `h-11` nur 38,5 px). Bei einem Update von `react-native-css` prüfen, ob der Patch noch nötig ist.
 
 ## Befehle
 
@@ -54,15 +56,22 @@ pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (sr
 - `src/components` – eigene Komponenten (SwipeRow, Stepper, ColorSwatchPicker …)
 - `src/lib/db` – Drizzle-Client, Schema (`schema/`), Migrationen (`migrations/`, generiert), `seed.ts` (Standard-Kategorien + „Sonstiges“), `purge.ts` (Soft-Deletes beim Start), `id.ts` (`newId()` – IDs immer explizit setzen, kein `$defaultFn` mit expo-crypto im Schema)
 - `src/lib/i18n` – `t("schlüssel", { platzhalter })`, Texte in `locales/de.ts`; Pluralformen `{ one, other }` mit `count`
-- `src/lib` – außerdem `settings.ts` (Schlüssel/Typen der `settings`-Tabelle), `theme.ts`, `units.ts` (Einheiten-Codes, Schritte), `list-colors.ts`, Query-Client
-- `src/hooks` – `useAppSetup` (Start hinter dem Splash), `useSettings`/`useUpdateSetting`
+- `src/lib/queries` – DB-Funktionen je Bereich (`lists.ts`, `list-items.ts`, `products.ts`), synchron, nur Drizzle-Builder
+- `src/lib` – außerdem `settings.ts`, `theme.ts`, `units.ts` (Codes, Schritte, Umrechnung, Eingabe), `format.ts` (Mengen-Anzeige), `search.ts` + `product-search.ts` (Suche/Ranking), `list-grouping.ts` (Ladenreihenfolge), `list-name.ts` (Namensregel „(n)“), `haptics.ts`, `query-keys.ts`
+- `src/hooks` – `useAppSetup`, `useSettings`, TanStack-Hooks je Bereich (`use-lists`, `use-list-items`, `use-catalog`), `useAppToast`, `useUndoableDelete` (Löschen mit Rückgängig)
+- Routen: `src/app/(tabs)/index.tsx` (Listen), `src/app/list/[id]/index.tsx` (Einkaufsmodus), `src/app/list/[id]/edit.tsx` (Liste bearbeiten)
 
 ## Konventionen
 
 - TypeScript strict, Import-Alias `@/` → `src/`.
 - Code und Bezeichner auf Englisch, UI-Texte auf Deutsch – aber **nie hart im Code**: alle Texte über die eigene i18n-Schicht mit `expo-localization` (vorerst nur Deutsch). Rezeptinhalte bleiben Englisch (API).
 - Styling nur über NativeWind-Klassen mit den semantischen Tokens `bg`, `surface`, `ink`, `soft`, `line`, `chip`, `primary`, `primary-ink`, `amber`, `danger` (hell/dunkel, Werte in der Spezifikation, definiert in `src/global.css`). Die Tailwind-Farbskalen sind entfernt; zusätzlich gibt es nur `white`, `black` und die Listenfarben `list-blue`/`list-purple`. Keine Hex-Werte in Komponenten.
-- Maß-Tokens: `rounded-card` (14), `rounded-thumb` (10), `rounded-full` (999), `px-page` (18), `py-row` (13).
+- **Keine Pixelwerte** in Klassen, immer die Tailwind-Skala (1 Einheit = 4 px, 1-px-Schritte über 0.25: `h-7.5` = 30, `px-2.25` = 9). Ausnahmen nur für Radien wie `rounded-[999px]` (statt `rounded-full`) oder `rounded-[5px]`.
+- **Schriftgrößen nur über `text-xs` … `text-2xl`** (Basis 16 px), keine `text-[…px]`. Designwerte runden: 11–12,5 → `xs`, 13–14 → `sm`, 15–16 → `base`, 17–18 → `lg`, 19–20 → `xl`.
+- **Bedingte Klassen immer mit `cn()`** aus `@gluestack-ui/utils/nativewind-utils`, nie mit Template-Strings.
+- Maß-Tokens: `rounded-card` (14), `rounded-thumb` (10), `px-page` (18), `py-row` (13).
+- Animierte Views mit `className` über `StyledAnimatedView` aus `src/components/ui/utils/animated.ts` (inkl. `layout`/`entering`/`exiting`).
+- **Datenbank: nur das Builder-Pattern** (`db.select().from(…)`, `insert`, `update`, `delete`), nicht die Query-API (`db.query.…`). Abfragen laufen synchron; Hooks invalidieren danach `queryKeys.lists` bzw. `queryKeys.products`.
 - Texte immer mit `Text` aus `@/components/ui/text` (Manrope, Standard 500). Manrope ist nativ eingebunden (expo-font-Plugin in `app.json`), Gewichte über `font-medium` … `font-extrabold`.
 - Units werden als Code gespeichert (`pcs`, `kg`, …) und über `t("units.<code>")` angezeigt.
 - Schrift Manrope 500–800; Icons `lucide-react-native` (nächstliegendes Icon).
@@ -88,7 +97,8 @@ pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (sr
 ## Umsetzungsphasen
 
 1. ✓ Fundament: Tokens hell/dunkel, gluestack-Theming, Manrope, Tab-Leiste, i18n, Drizzle-Schema + Migrationen + Seed (inkl. „Sonstiges“), `settings`, Theme beim Start, gluestack-Basiskomponenten (eigene Komponenten wie SwipeRow, Stepper kommen mit ihrer Phase)
-2. Listen-Übersicht, Liste bearbeiten, Einkaufsmodus
+2. ✓ Listen-Übersicht, Liste bearbeiten, Einkaufsmodus
+   - Entschieden: „1 Produkt“ im Singular. „‚{Suchtext}‘ neu anlegen“ legt bis Phase 3 direkt in „Sonstiges“ an (ohne Sheet 4d). Zahnrad, „Über Netzwerk senden“ und „Als Datei exportieren“ sind bis Phase 4/6 sichtbar, aber deaktiviert. Vorschaubild-Tipp → Vollbild folgt mit Phase 3.
 3. Produkte (Fotos, Bildansicht), Kategorien, Ladenreihenfolge
 4. Transfer über Netzwerk, Datei-Export/-Import
 5. Rezepte

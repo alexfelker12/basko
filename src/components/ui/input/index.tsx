@@ -34,7 +34,7 @@ const inputSlotStyle = tva({
 });
 
 const inputFieldStyle = tva({
-  base: 'flex-1 h-full py-0 font-sans font-semibold text-[15px] text-ink placeholder:text-soft web:outline-none web:cursor-text web:data-[disabled=true]:cursor-not-allowed',
+  base: 'flex-1 h-full py-0 font-sans font-semibold text-base text-ink placeholder:text-soft web:outline-none web:cursor-text web:data-[disabled=true]:cursor-not-allowed',
 });
 
 type IInputProps = React.ComponentProps<typeof UIInput> &
