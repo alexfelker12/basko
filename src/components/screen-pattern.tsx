@@ -6,15 +6,15 @@ import Svg, { Path } from "react-native-svg";
  * Dezentes, unregelmäßiges Hintergrundmuster hinter Screens mit wenig Inhalt – VORLÄUFIG vier
  * Varianten zum Vergleich (Branch `ui-feinschliff`), danach bleibt eine.
  * - `scatter`: verstreute Punkte in leicht unterschiedlicher Größe
- * - `sprinkles`: kurze Striche in zufälliger Richtung, wie Streusel
- * - `stardust`: feine Punkte, dazwischen vereinzelt kleine Kreuze und Ringe
- * - `bubbles`: wenige Kreisringe in verschiedenen Größen
+ * - `dotgrid`: Punktraster wie in einem Notizbuch, leicht unregelmäßig und mit Lücken
+ * - `fibers`: feine, kurze Fasern wie in Recyclingpapier
+ * - `pencil`: vereinzelte Bleistift-Spuren eines Einkaufszettels – Häkchen, Striche, Kringel
  *
  * Alle Formen entstehen aus einem festen Startwert (gleiches Bild bei jedem Öffnen) und werden
  * als ein einziger `Path` gezeichnet – kein `<Pattern>`, keine Hunderte Einzelelemente.
  * Farbe ist der Token `line`, leicht abgeschwächt.
  */
-export type PatternVariant = "scatter" | "sprinkles" | "stardust" | "bubbles";
+export type PatternVariant = "scatter" | "dotgrid" | "fibers" | "pencil";
 
 // Die Typen zeigen die Web-Variante (ohne Parameter); nativ liefert der Hook den aktuellen Wert
 const useNativeVariable = useUnstableNativeVariable as unknown as (name: string) => unknown;
@@ -29,7 +29,7 @@ export function ScreenPattern({ variant }: { variant: PatternVariant }) {
   const color = useNativeVariable("--line");
   if (typeof color !== "string") return null;
 
-  const { fill, stroke } = buildPattern(variant, width, height);
+  const { fill, stroke, strokeWidth } = buildPattern(variant, width, height);
 
   return (
     <View pointerEvents="none" className="absolute inset-0 overflow-hidden">
@@ -40,7 +40,7 @@ export function ScreenPattern({ variant }: { variant: PatternVariant }) {
             d={stroke}
             fill="none"
             stroke={color}
-            strokeWidth={1.3}
+            strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -92,6 +92,7 @@ function eachCell(
 function buildPattern(variant: PatternVariant, width: number, height: number) {
   let fill = "";
   let stroke = "";
+  let strokeWidth = 1.2;
 
   switch (variant) {
     case "scatter":
@@ -100,36 +101,65 @@ function buildPattern(variant: PatternVariant, width: number, height: number) {
       });
       break;
 
-    case "sprinkles":
-      eachCell(width, height, 30, 0.4, 23, (x, y, next) => {
-        const length = 3 + next() * 3;
-        const angle = next() * Math.PI;
-        const dx = round(Math.cos(angle) * length);
-        const dy = round(Math.sin(angle) * length);
-        stroke += `M${round(x - dx / 2)} ${round(y - dy / 2)}l${dx} ${dy}`;
-      });
-      break;
-
-    case "stardust":
-      eachCell(width, height, 24, 0.35, 37, (x, y, next) => {
-        const kind = next();
-        if (kind < 0.84) {
-          fill += circle(x, y, round(0.6 + next() * 0.7));
-        } else if (kind < 0.93) {
-          const size = 2.5;
-          stroke += `M${round(x - size)} ${round(y)}h${size * 2}M${round(x)} ${round(y - size)}v${size * 2}`;
-        } else {
-          stroke += circle(x, y, 2.2);
+    case "dotgrid": {
+      // Festes Raster, aber jeder Punkt minimal verrutscht, unterschiedlich kräftig, manche fehlen
+      const gap = 22;
+      const next = random(29);
+      for (let y = gap / 2; y < height; y += gap) {
+        for (let x = gap / 2; x < width; x += gap) {
+          if (next() < 0.18) continue;
+          const jitter = () => (next() - 0.5) * 1.4;
+          fill += circle(x + jitter(), y + jitter(), round(0.55 + next() * 0.45));
         }
+      }
+      break;
+    }
+
+    case "fibers":
+      // Kurze, leicht gebogene Härchen in zufälliger Richtung, dazu einzelne Pünktchen
+      strokeWidth = 0.8;
+      eachCell(width, height, 26, 0.35, 41, (x, y, next) => {
+        if (next() < 0.25) {
+          fill += circle(x, y, 0.6);
+          return;
+        }
+        const length = 4 + next() * 7;
+        const angle = next() * Math.PI * 2;
+        const dx = Math.cos(angle) * length;
+        const dy = Math.sin(angle) * length;
+        // Kontrollpunkt seitlich versetzt → sanfte Krümmung
+        const bend = (next() - 0.5) * length * 0.8;
+        const cx = x + dx / 2 - Math.sin(angle) * bend;
+        const cy = y + dy / 2 + Math.cos(angle) * bend;
+        stroke += `M${round(x)} ${round(y)}Q${round(cx)} ${round(cy)} ${round(x + dx)} ${round(y + dy)}`;
       });
       break;
 
-    case "bubbles":
-      eachCell(width, height, 54, 0.45, 53, (x, y, next) => {
-        stroke += circle(x, y, round(2 + next() * 5));
+    case "pencil":
+      // Wenige, leicht schiefe Zeichen wie mit Bleistift auf einem Einkaufszettel
+      strokeWidth = 1.2;
+      eachCell(width, height, 48, 0.45, 67, (x, y, next) => {
+        const kind = next();
+        const tilt = (next() - 0.5) * 0.6;
+        const cos = Math.cos(tilt);
+        const sin = Math.sin(tilt);
+        /** Punkt relativ zu (x, y), um `tilt` gedreht. */
+        const at = (px: number, py: number) =>
+          `${round(x + px * cos - py * sin)} ${round(y + px * sin + py * cos)}`;
+        if (kind < 0.4) {
+          // Häkchen
+          stroke += `M${at(-3, 0)}L${at(-1, 2.5)}L${at(4, -3)}`;
+        } else if (kind < 0.75) {
+          // kurzer Strich (Spiegelstrich)
+          const half = 2.5 + next() * 2;
+          stroke += `M${at(-half, 0)}L${at(half, 0)}`;
+        } else {
+          // kleiner Kringel (Aufzählungspunkt)
+          stroke += circle(x, y, round(1.6 + next() * 0.8));
+        }
       });
       break;
   }
 
-  return { fill, stroke };
+  return { fill, stroke, strokeWidth };
 }
