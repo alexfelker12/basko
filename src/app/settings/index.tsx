@@ -18,7 +18,7 @@ export default function SettingsScreen() {
   return (
     <View className="flex-1 bg-bg">
       {/* Hintergrundmuster – VORLÄUFIG zum Vergleich, siehe ScreenPattern */}
-      <ScreenPattern variant="lines" />
+      <ScreenPattern variant="bubbles" />
       <StackHeader title={t("settings.title")} />
       <View className="mx-page border-t border-line">
         <Pressable

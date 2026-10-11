@@ -114,7 +114,7 @@ export default function ProductsScreen() {
       onLayout={(event) => setScreenHeight(event.nativeEvent.layout.height)}
     >
       {/* Hintergrundmuster – VORLÄUFIG zum Vergleich, siehe ScreenPattern */}
-      <ScreenPattern variant="dots" />
+      <ScreenPattern variant="sprinkles" />
       <ScreenHeader title={t("products.title")}>
         <ViewToggle
           value={productsView}
