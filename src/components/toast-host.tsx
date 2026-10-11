@@ -32,9 +32,15 @@ const DEFAULT_DURATION = 2500;
 const MIN_REMAINING_AFTER_DRAG = 1500;
 /** Mehr Toasts gleichzeitig wären unübersichtlich – der älteste weicht. */
 const MAX_TOASTS = 3;
-/** Toasts sitzen 96 px über dem unteren Rand (`pb-24`); über der Tastatur bleiben 12 px Luft. */
+/** Toasts sitzen 96 px über dem unteren Rand (Abstandhalter `h-24`); über der Tastatur bleiben 12 px Luft. */
 const BOTTOM_OFFSET = 96;
 const KEYBOARD_GAP = 12;
+/**
+ * Richtungserkennung: Seitlich startet der Wisch schon nach 10 px, nach unten erst nach 24 px.
+ * Ein leicht schräger Wisch zählt damit als seitlich; die Achse steht danach fest.
+ */
+const ACTIVATE_X = 10;
+const ACTIVATE_DOWN = 24;
 /** Wegwischen: seitlich ab 30 % der Breite, nach unten ab 32 px – oder mit genug Schwung. */
 const SWIPE_X_RATIO = 0.3;
 const SWIPE_DOWN_DISTANCE = 32;
@@ -146,22 +152,23 @@ export function AppToastProvider({ children }: { children: ReactNode }) {
       <View className="flex-1">
         {children}
         {/* Bildschirmhoher Stapel, unten ausgerichtet: Seine Oberkante bleibt fest, wenn Toasts
-            gehen – so blenden sie an Ort und Stelle aus, statt erst nach unten zu rutschen. */}
-        <StyledAnimatedView
-          pointerEvents="box-none"
-          className="absolute inset-0 justify-end gap-2 px-3 pb-24"
-          style={liftStyle}
-        >
-          {toasts.map((toast) => (
-            <SwipeableToast
-              key={toast.id}
-              toast={toast}
-              onDismiss={() => close(toast.id)}
-              onDragStart={() => pause(toast.id)}
-              onDragCancel={() => resume(toast.id)}
-            />
-          ))}
-        </StyledAnimatedView>
+            gehen – so blenden sie an Ort und Stelle aus, statt erst nach unten zu rutschen.
+            Kein Padding/Gap am animierten Stapel (mit `pb-24` landeten die Toasts auf Android am
+            unteren Rand): Den Abstand nach unten hält ein Platzhalter, die Abstände tragen die Toasts. */}
+        <View pointerEvents="box-none" className="absolute inset-0">
+          <StyledAnimatedView pointerEvents="box-none" className="flex-1 justify-end" style={liftStyle}>
+            {toasts.map((toast) => (
+              <SwipeableToast
+                key={toast.id}
+                toast={toast}
+                onDismiss={() => close(toast.id)}
+                onDragStart={() => pause(toast.id)}
+                onDragCancel={() => resume(toast.id)}
+              />
+            ))}
+          </StyledAnimatedView>
+          <View pointerEvents="none" className="h-24" />
+        </View>
       </View>
     </ToastContext.Provider>
   );
@@ -179,24 +186,28 @@ function SwipeableToast({ toast, onDismiss, onDragStart, onDragCancel }: Swipeab
   const { width } = useWindowDimensions();
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  /** Achse des laufenden Wischs: 0 = noch offen, 1 = seitlich, 2 = senkrecht. */
+  /** Achse des laufenden Wischs: 1 = seitlich, 2 = nach unten – beim Start festgelegt. */
   const axis = useSharedValue(0);
+  /** Weg bis zum Start – wird abgezogen, damit der Toast nicht um die Schwelle springt. */
+  const startOffset = useSharedValue(0);
 
   const pan = Gesture.Pan()
-    .activeOffsetX([-12, 12])
-    .activeOffsetY(12)
-    .onStart(() => {
+    .activeOffsetX([-ACTIVATE_X, ACTIVATE_X])
+    .activeOffsetY(ACTIVATE_DOWN)
+    .onStart((event) => {
+      // Seitlich gewinnt, sobald die Seitwärtsbewegung ihre (kleinere) Schwelle erreicht hat
+      const horizontal = Math.abs(event.translationX) >= ACTIVATE_X;
+      axis.set(horizontal ? 1 : 2);
+      startOffset.set(horizontal ? event.translationX : event.translationY);
       scheduleOnRN(onDragStart);
     })
     .onUpdate((event) => {
-      if (axis.get() === 0) {
-        axis.set(Math.abs(event.translationX) > Math.abs(event.translationY) ? 1 : 2);
-      }
       if (axis.get() === 1) {
-        translateX.set(event.translationX);
+        translateX.set(event.translationX - startOffset.get());
       } else {
         // Nach oben nur mit deutlichem Widerstand
-        translateY.set(event.translationY > 0 ? event.translationY : event.translationY * 0.15);
+        const y = event.translationY - startOffset.get();
+        translateY.set(y > 0 ? y : y * 0.15);
       }
     })
     .onEnd((event) => {
@@ -241,7 +252,7 @@ function SwipeableToast({ toast, onDismiss, onDragStart, onDragCancel }: Swipeab
       layout={LinearTransition.duration(200)}
     >
       <GestureDetector gesture={pan}>
-        <Toast style={dragStyle}>
+        <Toast style={dragStyle} className="mx-3 mt-2">
           {toast.withCheck ? <Icon as={CheckIcon} size="lg" className="text-bg" /> : null}
           <ToastTitle>{toast.title}</ToastTitle>
           {toast.action ? (
