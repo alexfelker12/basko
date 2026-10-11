@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { CameraIcon, ImageIcon, PlusIcon, XIcon, type LucideIcon } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -10,6 +9,7 @@ import ReorderableList, {
 
 import { PhotoViewer } from "@/components/image-viewer";
 import { Icon } from "@/components/ui/icon";
+import { Image } from "@/components/ui/image";
 import { Popover, PopoverBackdrop, PopoverBody, PopoverContent } from "@/components/ui/popover";
 import { Text } from "@/components/ui/text";
 import { useAppToast } from "@/hooks/use-app-toast";

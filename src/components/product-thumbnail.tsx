@@ -1,6 +1,6 @@
-import { Image } from "expo-image";
 import { View } from "react-native";
 
+import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { productImageUri } from "@/lib/images";
 import { cn } from "@gluestack-ui/utils/nativewind-utils";
