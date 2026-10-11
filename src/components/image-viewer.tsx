@@ -1,6 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { XIcon } from "lucide-react-native";
-import { Pressable, View } from "react-native";
+import { useState } from "react";
+import { Pressable, View, type LayoutChangeEvent } from "react-native";
 
 import { Icon } from "@/components/ui/icon";
 import { ImageViewer, ImageViewerContent, useImageViewer } from "@/components/ui/image-viewer";
@@ -9,6 +10,9 @@ import { useProductImages } from "@/hooks/use-catalog";
 import { t } from "@/lib/i18n";
 import { productImageUri } from "@/lib/images";
 import { cn } from "@gluestack-ui/utils/nativewind-utils";
+
+/** Abstand zwischen Bildfläche und Kopf bzw. Fuß. */
+const CHROME_GAP = 8;
 
 interface PhotoViewerProps {
   /** Produktname im Kopf. */
@@ -25,6 +29,9 @@ interface PhotoViewerProps {
  * Wird bei jedem Öffnen neu eingehängt, damit `initialIndex` greift.
  */
 export function PhotoViewer({ title, uris, initialIndex = 0, isOpen, onClose }: PhotoViewerProps) {
+  // Höhe von Kopf und Fuß (inkl. Safe Area) – die Bildfläche liegt dazwischen und ragt nicht hinein
+  const [chrome, setChrome] = useState({ top: 0, bottom: 0 });
+
   if (!isOpen || uris.length === 0) return null;
 
   return (
@@ -36,21 +43,44 @@ export function PhotoViewer({ title, uris, initialIndex = 0, isOpen, onClose }: 
         if (!open) onClose();
       }}
     >
-      <ImageViewerContent>
+      <ImageViewerContent
+        insetTop={chrome.top + CHROME_GAP}
+        insetBottom={chrome.bottom + CHROME_GAP}
+      >
         <StatusBar style="light" />
-        <ViewerChrome title={title} />
+        <ViewerChrome
+          title={title}
+          onHeaderLayout={(event) =>
+            setChrome((current) => ({ ...current, top: event.nativeEvent.layout.height }))
+          }
+          onFooterLayout={(event) =>
+            setChrome((current) => ({ ...current, bottom: event.nativeEvent.layout.height }))
+          }
+        />
       </ImageViewerContent>
     </ImageViewer>
   );
 }
 
 /** Kopf (✕, Name, Zähler) und Fuß (Punkte, Hinweis) über dem Bild. */
-function ViewerChrome({ title }: { title: string }) {
+function ViewerChrome({
+  title,
+  onHeaderLayout,
+  onFooterLayout,
+}: {
+  title: string;
+  onHeaderLayout: (event: LayoutChangeEvent) => void;
+  onFooterLayout: (event: LayoutChangeEvent) => void;
+}) {
   const { currentIndex, images, close } = useImageViewer();
 
   return (
     <>
-      <View className="absolute left-0 right-0 top-0 pt-safe" pointerEvents="box-none">
+      <View
+        className="absolute left-0 right-0 top-0 pt-safe"
+        pointerEvents="box-none"
+        onLayout={onHeaderLayout}
+      >
         <View className="h-15 flex-row items-center gap-3 px-page">
           <Pressable
             onPress={close}
@@ -71,7 +101,11 @@ function ViewerChrome({ title }: { title: string }) {
         </View>
       </View>
 
-      <View className="absolute bottom-0 left-0 right-0 pb-safe" pointerEvents="none">
+      <View
+        className="absolute bottom-0 left-0 right-0 pb-safe"
+        pointerEvents="none"
+        onLayout={onFooterLayout}
+      >
         <View className="items-center gap-3 pb-6">
           {images.length > 1 ? (
             <View className="flex-row gap-1.5">

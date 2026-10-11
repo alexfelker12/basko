@@ -125,6 +125,7 @@ const ZoomableImage = React.memo(
       onSwipeRight,
       onDismiss,
       onZoomChange,
+      height,
     }: {
       image: ImageItem;
       index: number;
@@ -133,6 +134,8 @@ const ZoomableImage = React.memo(
       onSwipeRight: () => void;
       onDismiss: () => void;
       onZoomChange?: (isZoomed: boolean) => void;
+      /** Basko: Höhe der Bildfläche (zwischen Kopf und Fuß), statt fest 80 % des Bildschirms. */
+      height: number;
     },
     ref
   ) {
@@ -204,7 +207,7 @@ const ZoomableImage = React.memo(
       .onUpdate((event) => {
         // Calculate max translation bounds for zoomed image
         const maxTranslateX = ((scale.get() - 1) * SCREEN_WIDTH) / 2;
-        const maxTranslateY = ((scale.get() - 1) * SCREEN_HEIGHT * 0.8) / 2;
+        const maxTranslateY = ((scale.get() - 1) * height) / 2;
 
         // Allow panning within bounds
         const newTranslateX = savedTranslateX.get() + event.translationX;
@@ -317,7 +320,7 @@ const ZoomableImage = React.memo(
           savedScale.set(zoomScale);
 
           const centerX = SCREEN_WIDTH / 2;
-          const centerY = SCREEN_HEIGHT * 0.4;
+          const centerY = height / 2;
           const deltaX = centerX - lastTapX.get();
           const deltaY = centerY - lastTapY.get();
           const targetX = (deltaX * zoomScale) / zoomScale;
@@ -355,7 +358,7 @@ const ZoomableImage = React.memo(
           alt={image.alt}
           resizeMode="contain"
           style={[
-            { width: SCREEN_WIDTH, height: SCREEN_HEIGHT * 0.8 },
+            { width: SCREEN_WIDTH, height },
             animatedStyle,
           ]}
         />
@@ -370,11 +373,13 @@ const SlidableImageGallery = React.memo(function SlidableImageGallery({
   currentIndex,
   onIndexChange,
   onDismiss,
+  height,
 }: {
   images: ImageItem[];
   currentIndex: number;
   onIndexChange: (index: number) => void;
   onDismiss: () => void;
+  height: number;
 }) {
   const flatListRef = useRef<FlatList>(null);
   const [localIndex, setLocalIndex] = useState(currentIndex);
@@ -448,7 +453,7 @@ const SlidableImageGallery = React.memo(function SlidableImageGallery({
   // Render each image item
   const renderItem = useCallback(
     ({ item, index }: { item: ImageItem; index: number }) => (
-      <View style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT * 0.8 }}>
+      <View style={{ width: SCREEN_WIDTH, height }}>
         <ZoomableImage
           ref={(ref) => {
             if (ref) {
@@ -464,10 +469,11 @@ const SlidableImageGallery = React.memo(function SlidableImageGallery({
           onSwipeRight={goPrevious}
           onDismiss={onDismiss}
           onZoomChange={index === localIndex ? handleZoomChange : undefined}
+          height={height}
         />
       </View>
     ),
-    [localIndex, goNext, goPrevious, onDismiss, handleZoomChange]
+    [localIndex, goNext, goPrevious, onDismiss, handleZoomChange, height]
   );
 
   // Get item layout for better performance
@@ -487,7 +493,7 @@ const SlidableImageGallery = React.memo(function SlidableImageGallery({
 
   return (
     <View
-      style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT * 0.8 }}
+      style={{ width: SCREEN_WIDTH, height }}
       className="web:my-auto"
     >
       <FlatList
@@ -606,11 +612,26 @@ const ImageViewerTrigger = React.forwardRef<
 // Context provider is placed INSIDE the Overlay so portaled content has access
 const ImageViewerContent = React.forwardRef<
   View,
-  { children?: React.ReactNode }
->(function ImageViewerContent({ children }, ref) {
+  {
+    children?: React.ReactNode;
+    /**
+     * Basko: Abstand der Bildfläche oben/unten, z. B. für eigene Kopf- und Fußzeilen. Ohne Angabe
+     * wie im Original: 80 % der Höhe, mittig.
+     */
+    insetTop?: number;
+    insetBottom?: number;
+  }
+>(function ImageViewerContent({ children, insetTop, insetBottom }, ref) {
   const context = useImageViewerContext();
   const { images, currentIndex, isOpen, close, goNext, goPrevious } = context;
   const currentImage = images[currentIndex];
+  const [containerHeight, setContainerHeight] = useState(SCREEN_HEIGHT);
+  const hasInsets = insetTop !== undefined || insetBottom !== undefined;
+  const galleryTop = hasInsets ? (insetTop ?? 0) : containerHeight * 0.1;
+  const galleryHeight = Math.max(
+    0,
+    hasInsets ? containerHeight - galleryTop - (insetBottom ?? 0) : containerHeight * 0.8
+  );
 
   return (
     <Overlay
@@ -640,20 +661,33 @@ const ImageViewerContent = React.forwardRef<
                 justifyContent: 'center',
                 alignItems: 'center',
               }}
+              onLayout={(event) => setContainerHeight(event.nativeEvent.layout.height)}
             >
               {currentImage && (
-                <SlidableImageGallery
-                  images={images}
-                  currentIndex={currentIndex}
-                  onIndexChange={(newIndex) => {
-                    if (newIndex > currentIndex) {
-                      goNext();
-                    } else if (newIndex < currentIndex) {
-                      goPrevious();
-                    }
+                // Basko: Bildfläche zwischen den Abständen statt fest 80 % mittig
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: galleryTop,
+                    height: galleryHeight,
                   }}
-                  onDismiss={close}
-                />
+                >
+                  <SlidableImageGallery
+                    height={galleryHeight}
+                    images={images}
+                    currentIndex={currentIndex}
+                    onIndexChange={(newIndex) => {
+                      if (newIndex > currentIndex) {
+                        goNext();
+                      } else if (newIndex < currentIndex) {
+                        goPrevious();
+                      }
+                    }}
+                    onDismiss={close}
+                  />
+                </View>
               )}
               {children}
             </View>
