@@ -92,14 +92,30 @@ export default function ListsScreen() {
     if (list) action(list);
   };
 
+  // Wartet der Export auf das Schließen des Menüs? (siehe `exportMenuList`)
+  const menuOpen = useRef(false);
+  const menuClosedWaiter = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    menuOpen.current = menuList !== null;
+  }, [menuList]);
+
+  /** Menü schließen und warten, bis die Schließ-Animation fertig ist. */
+  const closeMenuAndWait = () =>
+    new Promise<void>((resolve) => {
+      if (!menuOpen.current) return resolve();
+      menuClosedWaiter.current = resolve;
+      setMenuList(null);
+    });
+
   /**
-   * „Als Datei exportieren“: Das Menü bleibt mit Spinner offen, bis die Datei fertig ist, und
-   * schließt sich direkt vor dem Teilen-Menü.
+   * „Als Datei exportieren“: Das Menü bleibt mit Spinner offen, bis die Datei fertig ist. Dann
+   * schließt es sich, und erst danach öffnet sich das Teilen-Menü – sonst friert Android die
+   * Schließ-Animation unter dem Teilen-Menü ein.
    */
   const exportMenuList = () => {
     if (!menuList || exportList.isPending) return;
     exportList.mutate(
-      { listId: menuList.id, onReady: () => setMenuList(null) },
+      { listId: menuList.id, beforeShare: closeMenuAndWait },
       {
         onError: (error) => {
           console.warn("[transfer] export", error);
@@ -199,6 +215,10 @@ export default function ListsScreen() {
       <ListActionsSheet
         list={menuList}
         onClose={() => setMenuList(null)}
+        onClosed={() => {
+          menuClosedWaiter.current?.();
+          menuClosedWaiter.current = null;
+        }}
         onEdit={closeMenuThen((list) =>
           router.push({ pathname: "/list/[id]/edit", params: { id: list.id } })
         )}

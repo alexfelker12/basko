@@ -36,10 +36,13 @@ function freshCacheDirectory(name: string): Directory {
 /**
  * „Als Datei exportieren“: schreibt `{Listenname}.basko` in den Cache und öffnet das
  * Teilen-Menü. Danach entsteht ein Verlaufseintrag „exportiert“. `false`, wenn es die Liste
- * nicht (mehr) gibt. `onReady` läuft, sobald die Datei fertig ist – direkt vor dem Teilen-Menü
- * (z. B. um das Listen-Menü zu schließen, das bis dahin einen Spinner zeigt).
+ * nicht (mehr) gibt. `beforeShare` läuft, sobald die Datei fertig ist, und wird abgewartet – z. B.
+ * um das Listen-Menü (bis dahin mit Spinner) zu schließen, bevor das Teilen-Menü darüber aufgeht.
  */
-export async function exportListFile(listId: string, onReady?: () => void): Promise<boolean> {
+export async function exportListFile(
+  listId: string,
+  beforeShare?: () => void | Promise<void>
+): Promise<boolean> {
   const transfer = await buildListTransfer(listId);
   if (!transfer) return false;
 
@@ -50,7 +53,7 @@ export async function exportListFile(listId: string, onReady?: () => void): Prom
   file.create({ overwrite: true });
   file.write(encodeTransfer(transfer.payload, transfer.images));
 
-  onReady?.();
+  await beforeShare?.();
   await Sharing.shareAsync(file.uri, {
     mimeType: BASKO_MIME_TYPE,
     UTI: BASKO_UTI,

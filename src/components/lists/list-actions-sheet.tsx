@@ -19,6 +19,8 @@ import { ListRowContent } from "./list-row";
 interface ListActionsSheetProps {
   list: ListSummary | null;
   onClose: () => void;
+  /** Nach der Schließ-Animation (z. B. um danach das Teilen-Menü zu öffnen). */
+  onClosed?: () => void;
   onEdit: () => void;
   onRename: () => void;
   onSend: () => void;
@@ -33,6 +35,7 @@ interface ListActionsSheetProps {
 export function ListActionsSheet({
   list,
   onClose,
+  onClosed,
   onEdit,
   onRename,
   onSend,
@@ -44,7 +47,7 @@ export function ListActionsSheet({
   const shownList = useLastDefined(list);
 
   return (
-    <Sheet isOpen={list !== null} onDismiss={onClose}>
+    <Sheet isOpen={list !== null} onDismiss={onClose} onClosed={onClosed}>
       {shownList ? (
         <View className="pb-2">
           <View className="mb-1 border-b border-line px-page pb-3.5 pt-2">

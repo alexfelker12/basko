@@ -42,8 +42,13 @@ export function useClearTransferHistory() {
 export function useExportList() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ listId, onReady }: { listId: string; onReady?: () => void }) =>
-      exportListFile(listId, onReady),
+    mutationFn: ({
+      listId,
+      beforeShare,
+    }: {
+      listId: string;
+      beforeShare?: () => void | Promise<void>;
+    }) => exportListFile(listId, beforeShare),
     onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.transferHistory }),
   });
 }
