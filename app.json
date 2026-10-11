@@ -52,7 +52,7 @@
       "infoPlist": {
         "CFBundleDocumentTypes": [
           {
-            "CFBundleTypeName": "Digi List",
+            "CFBundleTypeName": "Basko-Liste",
             "CFBundleTypeRole": "Viewer",
             "LSItemContentTypes": [
               "com.alexfelker.basko.list"
@@ -62,16 +62,21 @@
         "UTImportedTypeDeclarations": [
           {
             "UTTypeIdentifier": "com.alexfelker.basko.list",
-            "UTTypeDescription": "Digi List",
+            "UTTypeDescription": "Basko-Liste",
             "UTTypeConformsTo": [
               "public.data"
             ],
             "UTTypeTagSpecification": {
               "public.filename-extension": [
                 "basko"
-              ]
+              ],
+              "public.mime-type": "application/x-basko"
             }
           }
+        ],
+        "NSLocalNetworkUsageDescription": "Basko sucht Geräte im selben WLAN, um Einkaufslisten direkt zu senden und zu empfangen.",
+        "NSBonjourServices": [
+          "_basko._tcp"
         ]
       }
     },

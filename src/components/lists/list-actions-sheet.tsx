@@ -21,19 +21,20 @@ interface ListActionsSheetProps {
   onClose: () => void;
   onEdit: () => void;
   onRename: () => void;
+  onSend: () => void;
+  onExport: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
 }
 
-/**
- * „···“-Menü (1e). „Über Netzwerk senden“ und „Als Datei exportieren“ sind bis Phase 4
- * sichtbar, aber deaktiviert.
- */
+/** „···“-Menü (1e). */
 export function ListActionsSheet({
   list,
   onClose,
   onEdit,
   onRename,
+  onSend,
+  onExport,
   onDuplicate,
   onDelete,
 }: ListActionsSheetProps) {
@@ -62,15 +63,13 @@ export function ListActionsSheet({
             icon={WifiIcon}
             title={t("listActions.send.title")}
             description={t("listActions.send.description")}
-            onPress={onClose}
-            disabled
+            onPress={onSend}
           />
           <ActionItem
             icon={ShareIcon}
             title={t("listActions.export.title")}
             description={t("listActions.export.description")}
-            onPress={onClose}
-            disabled
+            onPress={onExport}
           />
           <ActionItem
             icon={CopyIcon}

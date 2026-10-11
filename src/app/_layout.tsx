@@ -11,6 +11,7 @@ import { KeyboardProvider, useResizeMode } from "react-native-keyboard-controlle
 
 import { ErrorScreen } from "@/components/error-screen";
 import { AppToastProvider } from "@/components/toast-host";
+import { TransferHost } from "@/components/transfer/transfer-host";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { useAppSetup } from "@/hooks/use-app-setup";
 import { useSettings } from "@/hooks/use-settings";
@@ -36,6 +37,8 @@ function ThemedApp() {
           {/* Rand bis Rand: Status- und Navigationsleiste folgen dem Thema */}
           <StatusBar style="auto" />
           <NavigationBar style="auto" />
+          {/* Sichtbarkeit im Netzwerk und Transfer-Hinweise (Phase 4) */}
+          <TransferHost />
           <Stack
             screenOptions={{
               headerShown: false,
