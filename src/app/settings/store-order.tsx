@@ -1,12 +1,15 @@
 import { LayersIcon, PlusIcon, Trash2Icon } from "lucide-react-native";
-import { useState } from "react";
-import { Keyboard, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { Keyboard, View, type FlatList } from "react-native";
+import { Gesture } from "react-native-gesture-handler";
+import { useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
 import ReorderableList, { type ReorderableListReorderEvent } from "react-native-reorderable-list";
 
 import { CategoryRenameRow, DragSortRow } from "@/components/categories/category-row";
 import { NewCategoryDialog } from "@/components/categories/new-category-dialog";
 import { Dialog } from "@/components/dialog";
 import { EmptyState } from "@/components/empty-state";
+import { KeyboardSpacer } from "@/components/keyboard-spacer";
 import { StackHeader } from "@/components/stack-header";
 import { SWIPE_ACTION_WIDTH, SwipeRow } from "@/components/swipe-row";
 import { AlertDialogFooter } from "@/components/ui/alert-dialog";
@@ -19,6 +22,7 @@ import {
   useRenameCategory,
   useReorderCategories,
 } from "@/hooks/use-categories";
+import { useScrollFocusedInputIntoView } from "@/hooks/use-keyboard";
 import { useLastDefined } from "@/hooks/use-last-defined";
 import { hapticTap } from "@/lib/haptics";
 import { t } from "@/lib/i18n";
@@ -39,6 +43,25 @@ export default function StoreOrderScreen() {
   const [newOpen, setNewOpen] = useState(false);
   const [deleting, setDeleting] = useState<CategoryRow | null>(null);
   const shownDeleting = useLastDefined(deleting);
+
+  // Die Liste zieht nur bei senkrechter Bewegung (nach dem Griff, 5b). Mit der Standardgeste der
+  // Bibliothek gewann sie fast jeden Wisch, und die Zeilen ließen sich kaum zur Seite wischen.
+  const panGesture = useMemo(
+    () => Gesture.Pan().activeOffsetY([-10, 10]).failOffsetX([-10, 10]),
+    []
+  );
+
+  // Inline-Umbenennen weiter unten: die Zeile über die Tastatur scrollen
+  const listRef = useRef<FlatList<CategoryRow>>(null);
+  const scrollOffset = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollOffset.set(event.contentOffset.y);
+    },
+  });
+  useScrollFocusedInputIntoView(renamingId !== null, (dy) =>
+    listRef.current?.scrollToOffset({ offset: scrollOffset.get() + dy, animated: true })
+  );
 
   const categories = allCategories.filter((category) => !category.isSystem);
   const systemName = allCategories.find((category) => category.isSystem)?.name ?? "";
@@ -91,7 +114,10 @@ export default function StoreOrderScreen() {
         />
       ) : (
         <ReorderableList
+          ref={listRef}
           data={categories}
+          panGesture={panGesture}
+          onScroll={onScroll}
           keyExtractor={(category) => category.id}
           onReorder={reorder}
           dragEnabled={renamingId === null}
@@ -99,7 +125,11 @@ export default function StoreOrderScreen() {
           keyboardShouldPersistTaps="handled"
           // Fremdkomponente ohne className-Unterstützung
           style={{ flex: 1 }}
-          ListFooterComponent={<View className="h-6" />}
+          ListFooterComponent={
+            <View className="pb-6">
+              <KeyboardSpacer />
+            </View>
+          }
           renderItem={({ item }) =>
             item.id === renamingId ? (
               <CategoryRenameRow
