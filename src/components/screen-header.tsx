@@ -13,11 +13,11 @@ interface ScreenHeaderProps {
 export function ScreenHeader({ title, children }: ScreenHeaderProps) {
   return (
     <View className="pt-safe">
-      <View className="h-[60px] flex-row items-center gap-1.5 px-page">
+      <View className="h-15 flex-row items-center gap-1.5 px-page">
         <Text
           role="heading"
           numberOfLines={1}
-          className="flex-1 text-[19px] font-extrabold tracking-[-0.2px]"
+          className="flex-1 text-xl font-extrabold tracking-[-0.2px]"
         >
           {title}
         </Text>

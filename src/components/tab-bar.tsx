@@ -4,6 +4,7 @@ import { Pressable, View } from "react-native";
 
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { cn } from "@gluestack-ui/utils/nativewind-utils";
 
 type TabBarButtonProps = TabTriggerSlotProps & {
   label: string;
@@ -15,24 +16,27 @@ type TabBarButtonProps = TabTriggerSlotProps & {
  * Aktiv: Pille 56 × 30 in `chip`, Icon und Text in `primary`; sonst `soft`.
  * Wird von `TabTrigger asChild` mit `isFocused`, `onPress` usw. versorgt.
  */
-export function TabBarButton({ label, icon, isFocused, ref, ...props }: TabBarButtonProps) {
+export function TabBarButton({ label, icon, isFocused, style, ref, ...props }: TabBarButtonProps) {
   return (
     <Pressable
       ref={ref}
       role="tab"
       aria-selected={isFocused}
       aria-label={label}
-      className="min-h-[52px] flex-1 items-center gap-1"
+      className="min-h-13 flex-1 items-center flex-col gap-1"
       {...props}
     >
       <View
-        className={`h-[30px] w-14 items-center justify-center rounded-full ${isFocused ? "bg-chip" : ""}`}
+        className={cn(
+          "h-7.5 w-14 items-center justify-center rounded-[999px]",
+          isFocused && "bg-chip"
+        )}
       >
-        <Icon as={icon} size="lg" className={isFocused ? "text-primary" : "text-soft"} />
+        <Icon as={icon} size="lg" className={cn(isFocused ? "text-primary" : "text-soft")} />
       </View>
       <Text
         numberOfLines={1}
-        className={`text-[11px] ${isFocused ? "font-extrabold text-primary" : "font-bold text-soft"}`}
+        className={cn("text-xs", isFocused ? "font-extrabold text-primary" : "font-bold text-soft")}
       >
         {label}
       </Text>
