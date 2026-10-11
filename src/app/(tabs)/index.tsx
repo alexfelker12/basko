@@ -11,6 +11,7 @@ import { ListActionsSheet } from "@/components/lists/list-actions-sheet";
 import { ListRenameRow, ListRow } from "@/components/lists/list-row";
 import { NewListDialog } from "@/components/lists/new-list-dialog";
 import { ScreenHeader } from "@/components/screen-header";
+import { ScreenPattern } from "@/components/screen-pattern";
 import { SWIPE_ACTION_WIDTH, SwipeRow } from "@/components/swipe-row";
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { StyledAnimatedView } from "@/components/ui/utils/animated";
@@ -102,6 +103,8 @@ export default function ListsScreen() {
 
   return (
     <View className="flex-1 bg-bg">
+      {/* Hintergrundmuster – VORLÄUFIG zum Vergleich, siehe ScreenPattern */}
+      <ScreenPattern variant="doodles" />
       <ScreenHeader title={t("lists.title")}>
         {/* Einstellungen (8a) – vorerst nur mit der Ladenreihenfolge, der Rest folgt in Phase 6 */}
         <Button

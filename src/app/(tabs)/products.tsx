@@ -11,6 +11,7 @@ import { ProductActionsSheet } from "@/components/products/product-actions-sheet
 import { ProductRow, ProductTile } from "@/components/products/product-row";
 import { ProductSheet, type ProductSheetState } from "@/components/products/product-sheet";
 import { ScreenHeader } from "@/components/screen-header";
+import { ScreenPattern } from "@/components/screen-pattern";
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
@@ -112,6 +113,8 @@ export default function ProductsScreen() {
       className="flex-1 bg-bg"
       onLayout={(event) => setScreenHeight(event.nativeEvent.layout.height)}
     >
+      {/* Hintergrundmuster – VORLÄUFIG zum Vergleich, siehe ScreenPattern */}
+      <ScreenPattern variant="dots" />
       <ScreenHeader title={t("products.title")}>
         <ViewToggle
           value={productsView}
