@@ -16,7 +16,8 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import { styled } from "nativewind";
-import { useWindowDimensions, View } from "react-native";
+import type { ComponentType } from "react";
+import { useWindowDimensions, View, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Circle, Defs, Line, Path, Pattern, Rect } from "react-native-svg";
 
 import { Icon } from "@/components/ui/icon";
@@ -32,17 +33,25 @@ import { Icon } from "@/components/ui/icon";
  */
 export type PatternVariant = "doodles" | "dots" | "grid" | "lines";
 
-// Wie beim Spinner: die Farbe der Klasse wird zur `color`-Prop (für `currentColor`)
-const StyledSvg = styled(Svg, {
+type SvgVariant = Exclude<PatternVariant, "doodles">;
+
+// Die Farbe der Klasse (`text-line`) kommt als `color`-Prop an und wird direkt als Füllung bzw.
+// Strich gesetzt. Kein `currentColor`: in einem `<Pattern>` stürzt react-native-svg auf Android ab
+// („DefsView cannot be cast to RenderableView“).
+const StyledSvgPattern = styled(SvgPattern, {
   // @ts-expect-error -- react-native-css 3.0.x typt nativeStyleToProp bei StyleProp-Unions als undefined; zur Laufzeit korrekt
   className: { target: "style", nativeStyleToProp: { color: true } },
-});
+}) as ComponentType<{ variant: SvgVariant; className?: string }>;
 
 /** Muster liegt hinter dem Inhalt und fängt keine Berührungen ab. */
 export function ScreenPattern({ variant }: { variant: PatternVariant }) {
   return (
     <View pointerEvents="none" className="absolute inset-0 overflow-hidden">
-      {variant === "doodles" ? <Doodles /> : <SvgPattern variant={variant} />}
+      {variant === "doodles" ? (
+        <Doodles />
+      ) : (
+        <StyledSvgPattern variant={variant} className="text-line" />
+      )}
     </View>
   );
 }
@@ -52,13 +61,21 @@ const DOT_GAP = 18;
 const GRID_GAP = 22;
 const LINE_GAP = 30;
 
-function SvgPattern({ variant }: { variant: Exclude<PatternVariant, "doodles"> }) {
+function SvgPattern({
+  variant,
+  color,
+}: {
+  variant: SvgVariant;
+  color?: string;
+  /** Kommt von `styled()` mit; das Muster füllt immer die ganze Fläche. */
+  style?: StyleProp<ViewStyle>;
+}) {
   return (
-    <StyledSvg width="100%" height="100%" className="text-line">
+    <Svg width="100%" height="100%">
       <Defs>
         {variant === "dots" ? (
           <Pattern id="dots" width={DOT_GAP} height={DOT_GAP} patternUnits="userSpaceOnUse">
-            <Circle cx={DOT_GAP / 2} cy={DOT_GAP / 2} r={1.6} fill="currentColor" />
+            <Circle cx={DOT_GAP / 2} cy={DOT_GAP / 2} r={1.6} fill={color} />
           </Pattern>
         ) : null}
         {variant === "grid" ? (
@@ -66,7 +83,7 @@ function SvgPattern({ variant }: { variant: Exclude<PatternVariant, "doodles"> }
             <Path
               d={`M ${GRID_GAP} 0 L 0 0 0 ${GRID_GAP}`}
               fill="none"
-              stroke="currentColor"
+              stroke={color}
               strokeWidth={1}
             />
           </Pattern>
@@ -78,14 +95,14 @@ function SvgPattern({ variant }: { variant: Exclude<PatternVariant, "doodles"> }
               y1={LINE_GAP - 0.5}
               x2={LINE_GAP}
               y2={LINE_GAP - 0.5}
-              stroke="currentColor"
+              stroke={color}
               strokeWidth={1}
             />
           </Pattern>
         ) : null}
       </Defs>
       <Rect width="100%" height="100%" fill={`url(#${variant})`} />
-    </StyledSvg>
+    </Svg>
   );
 }
 
