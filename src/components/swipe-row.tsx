@@ -1,12 +1,11 @@
 import type { LucideIcon } from "lucide-react-native";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useId, type ReactNode } from "react";
 import { Pressable, View, type LayoutChangeEvent } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-  type SharedValue,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
@@ -22,14 +21,17 @@ export const SWIPE_ACTION_WIDTH = { delete: 96, edit: 112 } as const;
 const FULL_SWIPE_RATIO = 0.55;
 const ANIMATION = { duration: 180 };
 
-/** Immer nur eine Zeile offen: die zuletzt geöffnete schließt sich, sobald eine andere wischt. */
-let openRowOffset: SharedValue<number> | null = null;
+/**
+ * Immer nur eine Zeile offen: die zuletzt geöffnete schließt sich, sobald eine andere wischt.
+ * Zeilen werden über ihre ID verwaltet – Shared Values verlieren beim Wechsel vom UI- in den
+ * JS-Thread (scheduleOnRN) ihre Methoden.
+ */
+const rowClosers = new Map<string, () => void>();
+let openRowId: string | null = null;
 
-function claimOpenRow(offset: SharedValue<number>) {
-  if (openRowOffset && openRowOffset !== offset) {
-    openRowOffset.set(withTiming(0, ANIMATION));
-  }
-  openRowOffset = offset;
+function claimOpenRow(rowId: string) {
+  if (openRowId !== null && openRowId !== rowId) rowClosers.get(openRowId)?.();
+  openRowId = rowId;
 }
 
 interface SwipeRowProps {
@@ -63,12 +65,15 @@ export function SwipeRow({
   const rowWidth = useSharedValue(0);
   const pastFullSwipe = useSharedValue(false);
 
-  useEffect(
-    () => () => {
-      if (openRowOffset === translateX) openRowOffset = null;
-    },
-    [translateX]
-  );
+  const rowId = useId();
+
+  useEffect(() => {
+    rowClosers.set(rowId, () => translateX.set(withTiming(0, ANIMATION)));
+    return () => {
+      rowClosers.delete(rowId);
+      if (openRowId === rowId) openRowId = null;
+    };
+  }, [rowId, translateX]);
 
   const trigger = () => {
     hapticTap();
@@ -109,7 +114,7 @@ export function SwipeRow({
     .failOffsetY([-10, 10])
     .onStart(() => {
       startX.set(translateX.get());
-      scheduleOnRN(claimOpenRow, translateX);
+      scheduleOnRN(claimOpenRow, rowId);
     })
     .onUpdate((event) => {
       const next = Math.min(0, startX.get() + event.translationX);

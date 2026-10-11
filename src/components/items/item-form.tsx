@@ -1,18 +1,14 @@
 import { ChevronLeftIcon } from "lucide-react-native";
-import { useState } from "react";
 import { View } from "react-native";
 
-import { QuantityStepper } from "@/components/quantity-stepper";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { LIST_ITEM_NOTE_MAX } from "@/lib/db/schema";
-import { unitLabel } from "@/lib/format";
-import { formatNumber, t } from "@/lib/i18n";
+import { useAppForm } from "@/lib/form";
+import { t } from "@/lib/i18n";
 import type { ItemValues } from "@/lib/queries/list-items";
-import { convertQuantity, getUnitRule } from "@/lib/units";
-
-import { UnitPicker } from "./unit-picker";
+import { convertQuantity } from "@/lib/units";
+import { itemFormSchema, type ItemFormValues } from "@/lib/validation";
 
 export type ItemFormProduct = { name: string; categoryName: string };
 
@@ -43,11 +39,15 @@ export function ItemForm({
   onDelete,
   deleteLabel,
 }: ItemFormProps) {
-  const [quantity, setQuantity] = useState(initial.quantity);
-  const [unit, setUnit] = useState(initial.unit);
-  const [note, setNote] = useState(initial.note ?? "");
-
-  const step = getUnitRule(unit).step;
+  const form = useAppForm({
+    defaultValues: {
+      quantity: initial.quantity,
+      unit: initial.unit,
+      note: initial.note ?? "",
+    } as ItemFormValues,
+    validators: { onChange: itemFormSchema },
+    onSubmit: ({ value }) => onSubmit(value),
+  });
 
   return (
     <View className="gap-4 px-page pb-4">
@@ -67,41 +67,33 @@ export function ItemForm({
         </View>
       </View>
 
-      <View className="flex-row items-center gap-3">
-        <View className="flex-1">
-          <Text className="text-sm font-semibold">{t("itemSheet.quantity")}</Text>
-          <Text className="text-xs text-soft">
-            {t("itemSheet.step", { step: formatNumber(step), unit: unitLabel(unit) })}
-          </Text>
-        </View>
-        <QuantityStepper value={quantity} unit={unit} onChange={setQuantity} />
-      </View>
+      <form.Subscribe selector={(state) => state.values.unit}>
+        {(unit) => (
+          <form.AppField name="quantity">{(field) => <field.QuantityField unit={unit} />}</form.AppField>
+        )}
+      </form.Subscribe>
 
-      <View className="gap-2">
-        <Text className="text-sm font-semibold">{t("itemSheet.unit")}</Text>
-        <UnitPicker
-          value={unit}
-          productName={product.name}
-          onChange={(next) => {
-            setQuantity(convertQuantity(quantity, unit, next));
-            setUnit(next);
-          }}
-        />
-      </View>
+      <form.AppField name="unit">
+        {(field) => (
+          <field.UnitField
+            productName={product.name}
+            onUnitChange={(from, to) =>
+              form.setFieldValue("quantity", (quantity: number) => convertQuantity(quantity, from, to))
+            }
+          />
+        )}
+      </form.AppField>
 
-      <View className="gap-2">
-        <Text className="text-sm font-semibold">{t("itemSheet.note")}</Text>
-        <Input>
-          <InputField
-            value={note}
-            onChangeText={setNote}
+      <form.AppField name="note">
+        {(field) => (
+          <field.TextField
+            label={t("itemSheet.note")}
             placeholder={t("itemSheet.notePlaceholder")}
             maxLength={LIST_ITEM_NOTE_MAX}
             returnKeyType="done"
-            aria-label={t("itemSheet.note")}
           />
-        </Input>
-      </View>
+        )}
+      </form.AppField>
 
       <View className="mt-1 flex-row gap-2.5">
         {onDelete && deleteLabel ? (
@@ -109,9 +101,9 @@ export function ItemForm({
             <ButtonText className="text-danger">{deleteLabel}</ButtonText>
           </Button>
         ) : null}
-        <Button className="flex-1" onPress={() => onSubmit({ quantity, unit, note })}>
-          <ButtonText>{submitLabel}</ButtonText>
-        </Button>
+        <form.AppForm>
+          <form.SubmitButton label={submitLabel} className="flex-1" />
+        </form.AppForm>
       </View>
     </View>
   );

@@ -27,10 +27,10 @@ export function GluestackUIProvider({
         props.style,
       ]}
     >
-      {/* Basko: Toasts über geöffneten Sheets/Dialogen („{Produkt} hinzugefügt“ bei offener Suche) */}
-      <ToastProvider>
-        <OverlayProvider>{props.children}</OverlayProvider>
-      </ToastProvider>
+      {/* Toasts rendern selbst über ein Overlay – OverlayProvider muss außen liegen */}
+      <OverlayProvider>
+        <ToastProvider>{props.children}</ToastProvider>
+      </OverlayProvider>
     </View>
   );
 }

@@ -10,6 +10,7 @@ import {
 import { Pressable, View } from "react-native";
 
 import { Sheet } from "@/components/sheet";
+import { useLastDefined } from "@/hooks/use-last-defined";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { t } from "@/lib/i18n";
@@ -71,12 +72,19 @@ export function ListActionsSheet({
   onDuplicate,
   onDelete,
 }: ListActionsSheetProps) {
+  const shownList = useLastDefined(list);
+
   return (
     <Sheet isOpen={list !== null} onClose={onClose}>
-      {list ? (
+      {shownList ? (
         <View className="pb-2">
           <View className="mb-1 border-b border-line px-page pb-3.5 pt-2">
-            <ListRowContent name={list.name} color={list.color} itemCount={list.itemCount} large />
+            <ListRowContent
+              name={shownList.name}
+              color={shownList.color}
+              itemCount={shownList.itemCount}
+              large
+            />
           </View>
           <ActionItem
             icon={PencilIcon}

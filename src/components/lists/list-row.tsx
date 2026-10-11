@@ -1,12 +1,10 @@
 import { CheckIcon, EllipsisIcon } from "lucide-react-native";
-import { useState } from "react";
 import { Pressable, View } from "react-native";
 
 import { ListColorBar } from "@/components/list-color-bar";
-import { Button, ButtonIcon } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { useAppForm } from "@/lib/form";
 import { t } from "@/lib/i18n";
 import type { ListColor } from "@/lib/list-colors";
 import type { ListSummary } from "@/lib/queries/lists";
@@ -18,14 +16,16 @@ export function ListRowContent({
   color,
   itemCount,
   large,
+  className,
 }: {
   name: string;
   color: ListColor;
   itemCount: number;
   large?: boolean;
+  className?: string;
 }) {
   return (
-    <View className="flex-1 flex-row items-center gap-3.5">
+    <View className={cn("flex-row items-center gap-3.5", className)}>
       <ListColorBar color={color} />
       <View className="min-w-0 flex-1">
         <Text numberOfLines={1} className={cn("font-bold", large ? "text-lg" : "text-base")}>
@@ -54,7 +54,12 @@ export function ListRow({ list, onPress, onLongPress, onMorePress }: ListRowProp
       onLongPress={onLongPress}
       className="mx-page flex-row items-center gap-3 border-b border-line py-row active:opacity-70"
     >
-      <ListRowContent name={list.name} color={list.color} itemCount={list.itemCount} />
+      <ListRowContent
+        name={list.name}
+        color={list.color}
+        itemCount={list.itemCount}
+        className="flex-1"
+      />
       <Pressable
         onPress={onMorePress}
         role="button"
@@ -76,28 +81,34 @@ interface ListRenameRowProps {
 /**
  * Inline-Umbenennen (1d): gespeichert wird nur mit Haken oder Enter.
  * Tastatur schließen, daneben tippen oder Zurück verwirft die Änderung.
+ * Gleiche Höhe wie die normale Zeile (Feld und Haken 44), damit nichts springt.
  */
 export function ListRenameRow({ list, onSubmit, onCancel }: ListRenameRowProps) {
-  const [name, setName] = useState(list.name);
+  const form = useAppForm({
+    defaultValues: { name: list.name },
+    onSubmit: ({ value }) => onSubmit(value.name),
+  });
 
   return (
     <View className="mx-page flex-row items-center gap-3 border-b border-line py-row">
       <ListColorBar color={list.color} />
-      <Input className="flex-1">
-        <InputField
-          autoFocus
-          value={name}
-          onChangeText={setName}
-          onSubmitEditing={() => onSubmit(name)}
-          onBlur={onCancel}
-          selectTextOnFocus
-          returnKeyType="done"
-          aria-label={t("lists.nameInput")}
-        />
-      </Input>
-      <Button size="icon" onPress={() => onSubmit(name)} aria-label={t("lists.saveName")}>
-        <ButtonIcon as={CheckIcon} />
-      </Button>
+      <form.AppField name="name">
+        {(field) => (
+          <field.TextField
+            autoFocus
+            selectTextOnFocus
+            returnKeyType="done"
+            onSubmitEditing={() => form.handleSubmit()}
+            onBlur={onCancel}
+            accessibilityLabel={t("lists.nameInput")}
+            className="flex-1"
+            inputClassName="h-11"
+          />
+        )}
+      </form.AppField>
+      <form.AppForm>
+        <form.SubmitButton label={t("lists.saveName")} icon={CheckIcon} />
+      </form.AppForm>
     </View>
   );
 }

@@ -13,12 +13,8 @@ import { Sheet } from "@/components/sheet";
 import { CollapsedCategory, ShopRow } from "@/components/shop/shop-row";
 import { StackHeader } from "@/components/stack-header";
 import { SWIPE_ACTION_WIDTH, SwipeRow } from "@/components/swipe-row";
-import {
-  AlertDialog,
-  AlertDialogBackdrop,
-  AlertDialogContent,
-  AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
+import { Dialog } from "@/components/dialog";
+import { AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -29,6 +25,7 @@ import {
   useSetItemChecked,
   useUpdateListItem,
 } from "@/hooks/use-list-items";
+import { useLastDefined } from "@/hooks/use-last-defined";
 import { useListSummary, useTouchList } from "@/hooks/use-lists";
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { hapticTap } from "@/lib/haptics";
@@ -62,6 +59,7 @@ export default function ShopScreen() {
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [quickEdit, setQuickEdit] = useState<ListItemRow | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
+  const shownQuickEdit = useLastDefined(quickEdit);
 
   // Einkaufsmodus öffnen zählt als Benutzung der Liste
   const { mutate: touch } = touchList;
@@ -193,39 +191,36 @@ export default function ShopScreen() {
 
       {/* Schnell-Bearbeiten (2c): gespeichert wird erst mit „Fertig“, Wegwischen verwirft */}
       <Sheet isOpen={quickEdit !== null} onClose={() => setQuickEdit(null)}>
-        {quickEdit ? (
+        {shownQuickEdit ? (
           <ItemForm
-            key={quickEdit.id}
-            product={{ name: quickEdit.productName, categoryName: quickEdit.categoryName }}
-            initial={quickEdit}
+            key={shownQuickEdit.id}
+            product={{ name: shownQuickEdit.productName, categoryName: shownQuickEdit.categoryName }}
+            initial={shownQuickEdit}
             submitLabel={t("common.done")}
             onSubmit={(values) => {
-              updateItem.mutate({ id: quickEdit.id, values });
+              updateItem.mutate({ id: shownQuickEdit.id, values });
               setQuickEdit(null);
             }}
             deleteLabel={t("itemSheet.removeItem")}
-            onDelete={() => removeItem(quickEdit)}
+            onDelete={() => removeItem(shownQuickEdit)}
           />
         ) : null}
       </Sheet>
 
       {/* „Alle Haken entfernen?“ (Zurücksetzen im Header) */}
-      <AlertDialog isOpen={resetOpen} onClose={() => setResetOpen(false)} size="lg">
-        <AlertDialogBackdrop />
-        <AlertDialogContent>
-          <Text role="heading" className="text-xl font-extrabold">
-            {t("shop.resetDialog.title")}
-          </Text>
-          <AlertDialogFooter>
-            <Button variant="secondary" onPress={() => setResetOpen(false)}>
-              <ButtonText>{t("common.cancel")}</ButtonText>
-            </Button>
-            <Button onPress={reset}>
-              <ButtonText>{t("shop.resetDialog.confirm")}</ButtonText>
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog isOpen={resetOpen} onClose={() => setResetOpen(false)}>
+        <Text role="heading" className="text-xl font-extrabold">
+          {t("shop.resetDialog.title")}
+        </Text>
+        <AlertDialogFooter>
+          <Button variant="secondary" onPress={() => setResetOpen(false)}>
+            <ButtonText>{t("common.cancel")}</ButtonText>
+          </Button>
+          <Button onPress={reset}>
+            <ButtonText>{t("shop.resetDialog.confirm")}</ButtonText>
+          </Button>
+        </AlertDialogFooter>
+      </Dialog>
     </View>
   );
 }

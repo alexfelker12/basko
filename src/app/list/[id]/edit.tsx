@@ -7,7 +7,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { LinearTransition } from "react-native-reanimated";
 
 import { EmptyState } from "@/components/empty-state";
-import { AddItemsSheet, type AddItemsStep } from "@/components/items/add-items-sheet";
+import { AddItemsSheets, type AddItemsStep } from "@/components/items/add-items-sheet";
 import { ListColorDialog } from "@/components/lists/list-color-dialog";
 import { QuantityStepper } from "@/components/quantity-stepper";
 import { SectionHeader } from "@/components/section-header";
@@ -130,7 +130,7 @@ export default function EditListScreen() {
         </View>
       </KeyboardStickyView>
 
-      <AddItemsSheet
+      <AddItemsSheets
         listId={id}
         items={items}
         step={step}

@@ -1,12 +1,14 @@
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { PlusIcon, SearchIcon } from "lucide-react-native";
 import { useMemo } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { useCatalog } from "@/hooks/use-catalog";
+import { useSheetKeyboardHandlers } from "@/hooks/use-sheet-keyboard";
 import { PRODUCT_NAME_MAX } from "@/lib/db/schema";
 import { t } from "@/lib/i18n";
 import { searchProducts, type ProductSearchResult } from "@/lib/product-search";
@@ -22,8 +24,8 @@ interface ProductSearchProps {
 }
 
 /**
- * Such-Sheet (3c/3d): Eingabe oben mit Fokus, Treffer mit Name, Kategorie und Hinweisen.
- * Ohne Treffer: „‚{Suchtext}‘ neu anlegen“.
+ * Inhalt des Such-Sheets (3c/3d): Eingabe oben mit Fokus, Treffer mit Name, Kategorie und Hinweisen.
+ * Ohne Treffer: „‚{Suchtext}‘ neu anlegen“. Die Suche ist eine Live-Filterung, kein Formular.
  */
 export function ProductSearch({
   query,
@@ -33,6 +35,7 @@ export function ProductSearch({
   onCreate,
 }: ProductSearchProps) {
   const { data: catalog = [] } = useCatalog();
+  const sheetKeyboard = useSheetKeyboardHandlers();
   const results = useMemo(
     () => searchProducts(catalog, query, itemIdsByProduct),
     [catalog, query, itemIdsByProduct]
@@ -40,46 +43,52 @@ export function ProductSearch({
   const trimmed = query.trim();
 
   return (
-    <View className="flex-1 px-page">
-      <Input>
-        <InputSlot>
-          <InputIcon as={SearchIcon} />
-        </InputSlot>
-        <InputField
-          autoFocus
-          value={query}
-          onChangeText={onQueryChange}
-          placeholder={t("editList.searchPlaceholder")}
-          maxLength={PRODUCT_NAME_MAX}
-          returnKeyType="search"
-          autoCorrect={false}
-          aria-label={t("editList.searchPlaceholder")}
-        />
-      </Input>
+    <View className="flex-1">
+      <View className="px-page pb-1">
+        <Input>
+          <InputSlot>
+            <InputIcon as={SearchIcon} />
+          </InputSlot>
+          <InputField
+            autoFocus
+            value={query}
+            onChangeText={onQueryChange}
+            onFocus={sheetKeyboard?.onFocus}
+            onBlur={sheetKeyboard?.onBlur}
+            placeholder={t("editList.searchPlaceholder")}
+            maxLength={PRODUCT_NAME_MAX}
+            returnKeyType="search"
+            autoCorrect={false}
+            aria-label={t("editList.searchPlaceholder")}
+          />
+        </Input>
+      </View>
 
-      <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" contentContainerClassName="pb-4">
-        {results.map((result) => (
-          <ResultRow key={result.product.id} result={result} onPress={() => onSelect(result)} />
-        ))}
+      <BottomSheetScrollView keyboardShouldPersistTaps="handled">
+        <View className="px-page pb-4">
+          {results.map((result) => (
+            <ResultRow key={result.product.id} result={result} onPress={() => onSelect(result)} />
+          ))}
 
-        {trimmed && results.length === 0 ? (
-          <View className="pt-4">
-            <Text className="text-xs text-soft">{t("search.noResult")}</Text>
-            <Pressable
-              onPress={() => onCreate(trimmed)}
-              role="button"
-              className="mt-1.5 flex-row items-center gap-3 border-b border-line py-3 active:opacity-70"
-            >
-              <View className="size-8 items-center justify-center rounded-[999px] bg-chip">
-                <Icon as={PlusIcon} size="md" className="text-ink" />
-              </View>
-              <Text className="flex-1 text-base font-bold text-primary">
-                {t("search.create", { name: trimmed })}
-              </Text>
-            </Pressable>
-          </View>
-        ) : null}
-      </ScrollView>
+          {trimmed && results.length === 0 ? (
+            <View className="pt-4">
+              <Text className="text-xs text-soft">{t("search.noResult")}</Text>
+              <Pressable
+                onPress={() => onCreate(trimmed)}
+                role="button"
+                className="mt-1.5 flex-row items-center gap-3 border-b border-line py-3 active:opacity-70"
+              >
+                <View className="size-8 items-center justify-center rounded-[999px] bg-chip">
+                  <Icon as={PlusIcon} size="md" className="text-ink" />
+                </View>
+                <Text className="flex-1 text-base font-bold text-primary">
+                  {t("search.create", { name: trimmed })}
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
+      </BottomSheetScrollView>
     </View>
   );
 }

@@ -22,7 +22,7 @@ Basko ist eine private Einkaufslisten-App (Expo / React Native) für Android und
 - expo-router (Dateibasiertes Routing in `src/app`), Tabs selbst gebaut mit `expo-router/ui`
 - gluestack-ui v5 (alpha) + NativeWind 5 (Tailwind 4, `src/global.css`)
 - SQLite: expo-sqlite + Drizzle ORM (`src/lib/db`), Daten über TanStack Query
-- Formulare: TanStack Form + Zod (`drizzle-zod`)
+- Formulare: TanStack Form + Zod
 - Gesten/Animation: react-native-gesture-handler, Reanimated 4, react-native-reorderable-list
 - Transfer: react-native-zeroconf + react-native-tcp-socket; Datei-Export über expo-sharing
 - Rezepte: API Ninjas Recipe API v3, nur Free Tier
@@ -34,7 +34,10 @@ Basko ist eine private Einkaufslisten-App (Expo / React Native) für Android und
 
 Vorhanden: `@expo-google-fonts/manrope`, `expo-localization`, `expo-navigation-bar` (Navigationsleiste folgt dem Thema), `expo-haptics`, `expo-keep-awake`, dev: `drizzle-kit`, `babel-plugin-inline-import`. `expo-secure-store` ist entfernt.
 
-**Patch `react-native-css@3.0.4`** (`patches/`, eingetragen in `pnpm-workspace.yaml`): Der Metro-Transformer las `inlineRem` aus dem falschen Objekt, dadurch galt rem = 14 statt 16 (`text-base` war 14 px, `h-11` nur 38,5 px). Bei einem Update von `react-native-css` prüfen, ob der Patch noch nötig ist.
+**Patch `react-native-css@3.0.4`** (`patches/`, eingetragen in `pnpm-workspace.yaml`, Stellen mit „Basko-Patch“ markiert), beide Fehler auch in 3.0.7 noch vorhanden:
+1. Der Metro-Transformer las `inlineRem` aus dem falschen Objekt → rem war 14 statt 16 (`text-base` 14 px, `h-11` 38,5 px).
+2. `TextInput` mappt `textAlign` mit `true`; die Laufzeit rief darauf `.split` auf → „undefined is not a function“ bei `text-center` & Co. auf Eingabefeldern.
+Bei einem Update von `react-native-css` prüfen, ob der Patch noch nötig ist.
 
 ## Befehle
 
@@ -47,6 +50,11 @@ pnpm expo install <pkg>          # Expo-kompatible Version installieren
 pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (src/lib/db/migrations)
 ```
 
+**Sheets:** gluestack **BottomSheet** (`src/components/ui/bottomsheet`, @gorhom/bottom-sheet), nicht Actionsheet. Im App-Code immer über `Sheet` aus `src/components/sheet.tsx` (`isOpen`/`onClose`, optional `fullHeight` = 90 % mit `BottomSheetScrollView`). Eingabefelder im Sheet melden sich über `useSheetKeyboardHandlers()` an (die Formularfelder tun das schon), damit das Sheet über die Tastatur wandert. Damit ein Sheet beim Zuschieben seinen Inhalt behält: `useLastDefined`.
+**Dialoge:** `Dialog` aus `src/components/dialog.tsx` (AlertDialog + Platzhalter in Tastaturhöhe).
+
+**Formulare:** TanStack Form wie in digi-list – `useAppForm`/`withForm` aus `src/lib/form`, Felder über `form.AppField` (`field.TextField`, `field.QuantityField`, `field.UnitField`, `field.ColorField`), Absenden über `form.AppForm` + `form.SubmitButton`. Feld-Komponenten liegen in `src/components/form` und sind unabhängig vom Einsatzort (Dialog, Sheet, Zeile). Schemas in `src/lib/validation.ts` mit Zod (ohne drizzle-zod – dessen Typen sind mit Zod 4.6 unbrauchbar), Grenzen aus den Konstanten des DB-Schemas.
+
 **gluestack-Komponenten:** Die CLI (`gluestack-ui@alpha add`) fällt derzeit auf die v4-Vorlagen zurück, die `cssInterop` aus NativeWind 4 nutzen und hier nicht laufen. Neue Komponenten daher aus GitHub `gluestack/gluestack-ui`, Branch `main`, Ordner `src/components/ui/<name>` übernehmen (NativeWind-5-Vorlagen) und auf unsere Tokens umstellen. `styled()` nie direkt auf `Animated.createAnimatedComponent(...)` anwenden – das lässt den TypeScript-Check hängen; stattdessen `src/components/ui/utils/animated.ts` nutzen.
 
 ## Ordner
@@ -58,7 +66,8 @@ pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (sr
 - `src/lib/i18n` – `t("schlüssel", { platzhalter })`, Texte in `locales/de.ts`; Pluralformen `{ one, other }` mit `count`
 - `src/lib/queries` – DB-Funktionen je Bereich (`lists.ts`, `list-items.ts`, `products.ts`), synchron, nur Drizzle-Builder
 - `src/lib` – außerdem `settings.ts`, `theme.ts`, `units.ts` (Codes, Schritte, Umrechnung, Eingabe), `format.ts` (Mengen-Anzeige), `search.ts` + `product-search.ts` (Suche/Ranking), `list-grouping.ts` (Ladenreihenfolge), `list-name.ts` (Namensregel „(n)“), `haptics.ts`, `query-keys.ts`
-- `src/hooks` – `useAppSetup`, `useSettings`, TanStack-Hooks je Bereich (`use-lists`, `use-list-items`, `use-catalog`), `useAppToast`, `useUndoableDelete` (Löschen mit Rückgängig)
+- `src/hooks` – `useAppSetup`, `useSettings`, TanStack-Hooks je Bereich (`use-lists`, `use-list-items`, `use-catalog`), `useAppToast`, `useUndoableDelete` (Löschen mit Rückgängig), `useSheetKeyboardHandlers`, `useLastDefined`
+- `src/lib/form` + `src/components/form` – TanStack-Form-Hook und wiederverwendbare Felder; `src/lib/validation.ts` – Zod-Schemas
 - Routen: `src/app/(tabs)/index.tsx` (Listen), `src/app/list/[id]/index.tsx` (Einkaufsmodus), `src/app/list/[id]/edit.tsx` (Liste bearbeiten)
 
 ## Konventionen

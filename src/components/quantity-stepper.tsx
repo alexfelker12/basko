@@ -4,6 +4,7 @@ import { Pressable, TextInput, View } from "react-native";
 
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { useSheetKeyboardHandlers } from "@/hooks/use-sheet-keyboard";
 import { formatQuantity, unitLabel } from "@/lib/format";
 import { formatNumber, t } from "@/lib/i18n";
 import {
@@ -27,6 +28,7 @@ interface QuantityStepperProps {
  */
 export function QuantityStepper({ value, unit, onChange }: QuantityStepperProps) {
   const [draft, setDraft] = useState<string | null>(null);
+  const sheetKeyboard = useSheetKeyboardHandlers();
   const label = `${formatQuantity(value, unit)} ${unitLabel(unit)}`;
 
   const commit = () => {
@@ -53,14 +55,19 @@ export function QuantityStepper({ value, unit, onChange }: QuantityStepperProps)
           autoFocus
           value={draft}
           onChangeText={setDraft}
-          onBlur={commit}
+          onFocus={sheetKeyboard?.onFocus}
+          onBlur={(event) => {
+            sheetKeyboard?.onBlur(event);
+            commit();
+          }}
           onSubmitEditing={commit}
           keyboardType="decimal-pad"
           returnKeyType="done"
           selectTextOnFocus
+          textAlign="center"
           maxLength={9}
           aria-label={t("quantity.input")}
-          className="h-11 min-w-14 rounded-[999px] border-2 border-primary bg-surface px-2 py-0 text-center font-sans text-base font-extrabold text-ink"
+          className="h-11 min-w-14 rounded-[999px] border-2 border-primary bg-surface px-2 py-0 font-sans text-base font-extrabold text-ink"
         />
       ) : (
         <Pressable

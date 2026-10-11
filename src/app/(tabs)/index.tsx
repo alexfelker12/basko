@@ -17,8 +17,8 @@ import { useCreateList, useDuplicateList, useLists, useRenameList } from "@/hook
 import { useUndoableDelete } from "@/hooks/use-undoable-delete";
 import { hapticTap } from "@/lib/haptics";
 import { t } from "@/lib/i18n";
-import type { ListColor } from "@/lib/list-colors";
 import { purgeList, restoreList, softDeleteList, type ListSummary } from "@/lib/queries/lists";
+import type { ListFormValues } from "@/lib/validation";
 
 /** Listen-Übersicht (1a–1g), Start-Tab. */
 export default function ListsScreen() {
@@ -58,10 +58,10 @@ export default function ListsScreen() {
     if (list) action(list);
   };
 
-  const create = (name: string, color: ListColor) => {
+  const create = (values: ListFormValues) => {
     setNewListOpen(false);
     createList.mutate(
-      { name, color },
+      values,
       {
         // Nach dem Erstellen öffnet sich der Bearbeiten-Screen der neuen Liste (1f)
         onSuccess: (id) => router.push({ pathname: "/list/[id]/edit", params: { id } }),
