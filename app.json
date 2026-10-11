@@ -14,7 +14,8 @@
         "android.permission.CHANGE_WIFI_MULTICAST_STATE",
         "android.permission.ACCESS_WIFI_STATE",
         "android.permission.CHANGE_WIFI_STATE",
-        "android.permission.ACCESS_NETWORK_STATE"
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA"
       ],
       "intentFilters": [
         {
@@ -81,6 +82,14 @@
       "expo-router",
       "expo-sqlite",
       "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Basko braucht Zugriff auf deine Fotos, damit du Produkten Bilder hinzufügen kannst.",
+          "cameraPermission": "Basko braucht die Kamera, damit du Produkte fotografieren kannst.",
+          "microphonePermission": false
+        }
+      ],
       [
         "expo-font",
         {
