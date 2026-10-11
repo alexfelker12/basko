@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useLastDefined } from "@/hooks/use-last-defined";
 
 import { Sheet } from "@/components/sheet";
-import { useAppToast } from "@/hooks/use-app-toast";
 import { useOtherCategoryName } from "@/hooks/use-catalog";
 import {
   useAddListItem,
@@ -56,7 +55,6 @@ function initialValuesFor(product: AddableProduct): ItemValues {
  */
 export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem }: AddItemsSheetsProps) {
   const [query, setQuery] = useState("");
-  const showToast = useAppToast();
   const addItem = useAddListItem();
   const updateItem = useUpdateListItem();
   const addNewProduct = useAddNewProductToList();
@@ -90,7 +88,6 @@ export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem
 
   const add = (product: AddableProduct, values: ItemValues) => {
     const onSuccess = () => {
-      showToast({ title: t("itemSheet.added", { name: product.name }) });
       setQuery("");
       backToSearch();
     };

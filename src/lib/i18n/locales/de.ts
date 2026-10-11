@@ -81,7 +81,6 @@ const de = {
     note: "Notiz",
     notePlaceholder: "Notiz (optional)",
     add: "Zur Liste hinzufügen",
-    added: "{name} hinzugefügt",
     deleteItem: "Löschen",
     removeItem: "Entfernen",
   },
