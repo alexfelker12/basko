@@ -15,9 +15,8 @@ import {
   Wine,
   type LucideIcon,
 } from "lucide-react-native";
-import { styled } from "nativewind";
-import type { ComponentType } from "react";
-import { useWindowDimensions, View, type StyleProp, type ViewStyle } from "react-native";
+import { useUnstableNativeVariable } from "nativewind";
+import { useWindowDimensions, View } from "react-native";
 import Svg, { Circle, Defs, Line, Path, Pattern, Rect } from "react-native-svg";
 
 import { Icon } from "@/components/ui/icon";
@@ -35,41 +34,32 @@ export type PatternVariant = "doodles" | "dots" | "grid" | "lines";
 
 type SvgVariant = Exclude<PatternVariant, "doodles">;
 
-// Die Farbe der Klasse (`text-line`) kommt als `color`-Prop an und wird direkt als Füllung bzw.
-// Strich gesetzt. Kein `currentColor`: in einem `<Pattern>` stürzt react-native-svg auf Android ab
-// („DefsView cannot be cast to RenderableView“).
-const StyledSvgPattern = styled(SvgPattern, {
-  // @ts-expect-error -- react-native-css 3.0.x typt nativeStyleToProp bei StyleProp-Unions als undefined; zur Laufzeit korrekt
-  className: { target: "style", nativeStyleToProp: { color: true } },
-}) as ComponentType<{ variant: SvgVariant; className?: string }>;
-
 /** Muster liegt hinter dem Inhalt und fängt keine Berührungen ab. */
 export function ScreenPattern({ variant }: { variant: PatternVariant }) {
   return (
     <View pointerEvents="none" className="absolute inset-0 overflow-hidden">
-      {variant === "doodles" ? (
-        <Doodles />
-      ) : (
-        <StyledSvgPattern variant={variant} className="text-line" />
-      )}
+      {variant === "doodles" ? <Doodles /> : <SvgPattern variant={variant} />}
     </View>
   );
 }
+
+// Die Typen zeigen die Web-Variante (ohne Parameter); nativ liefert der Hook den aktuellen Wert
+const useNativeVariable = useUnstableNativeVariable as unknown as (name: string) => unknown;
 
 /** Kachelgrößen der SVG-Muster (in Punkten). */
 const DOT_GAP = 18;
 const GRID_GAP = 22;
 const LINE_GAP = 30;
 
-function SvgPattern({
-  variant,
-  color,
-}: {
-  variant: SvgVariant;
-  color?: string;
-  /** Kommt von `styled()` mit; das Muster füllt immer die ganze Fläche. */
-  style?: StyleProp<ViewStyle>;
-}) {
+/**
+ * Die Farbe kommt direkt aus der CSS-Variable `--line` (folgt dem Thema). Kein `currentColor`:
+ * in einem `<Pattern>` stürzt react-native-svg auf Android ab („DefsView cannot be cast to
+ * RenderableView“); über `styled()` als `color`-Prop kam sie hier nicht an.
+ */
+function SvgPattern({ variant }: { variant: SvgVariant }) {
+  const color = useNativeVariable("--line");
+  if (typeof color !== "string") return null;
+
   return (
     <Svg width="100%" height="100%">
       <Defs>
