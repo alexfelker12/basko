@@ -280,12 +280,6 @@ export function saveImport(
           .run();
       }
 
-      addTransferHistory({
-        direction: source.direction,
-        listId,
-        listName,
-        peerName: source.peerName,
-      });
       return { listId, listName };
     });
   } catch (error) {
@@ -293,6 +287,9 @@ export function saveImport(
     throw error;
   }
 
+  // Erst nach der Transaktion: `addTransferHistory` öffnet eine eigene, und expo-sqlite kann
+  // Transaktionen nicht verschachteln („Failed to run the query 'begin'“)
+  addTransferHistory({ ...result, direction: source.direction, peerName: source.peerName });
   deleteProductImageFiles(replaced);
   return result;
 }

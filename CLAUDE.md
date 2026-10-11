@@ -105,7 +105,7 @@ pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (sr
 - Fremdkomponenten ohne className-Unterstützung (z. B. `ReorderableList`) bekommen Layout per `style` (nur `flex`/Position); Abstände lieber über Kinder mit Klassen (`ListFooterComponent={<View className="h-6" />}`).
 - Bei `cn()` keine eigenen Maß-Tokens mit Skalenwerten derselben Eigenschaft mischen (`mx-page` + `mx-3`): tailwind-merge erkennt `page` nicht als Konflikt, beide Klassen bleiben stehen. Stattdessen sich ausschließende Zweige (`isActive ? "mx-3 …" : "mx-page …"`).
 - Animierte Views mit `className` über `StyledAnimatedView` aus `src/components/ui/utils/animated.ts` (inkl. `layout`/`entering`/`exiting`).
-- **Datenbank: nur das Builder-Pattern** (`db.select().from(…)`, `insert`, `update`, `delete`), nicht die Query-API (`db.query.…`). Abfragen laufen synchron; Hooks invalidieren danach `queryKeys.lists` bzw. `queryKeys.products`.
+- **Datenbank: nur das Builder-Pattern** (`db.select().from(…)`, `insert`, `update`, `delete`), nicht die Query-API (`db.query.…`). Abfragen laufen synchron; Hooks invalidieren danach `queryKeys.lists` bzw. `queryKeys.products`. **Keine verschachtelten Transaktionen:** Eine Query-Funktion mit eigenem `db.transaction` (z. B. `addTransferHistory`) nie innerhalb einer anderen Transaktion aufrufen – expo-sqlite bricht mit „Failed to run the query 'begin'“ ab.
 - Texte immer mit `Text` aus `@/components/ui/text` (Manrope, Standard 500). Manrope ist nativ eingebunden (expo-font-Plugin in `app.json`), Gewichte über `font-medium` … `font-extrabold`.
 - Units werden als Code gespeichert (`pcs`, `kg`, …) und über `t("units.<code>")` angezeigt.
 - Schrift Manrope 500–800; Icons `lucide-react-native` (nächstliegendes Icon).
