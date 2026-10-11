@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import { Pressable, View } from "react-native";
 import {
   Easing,
-  interpolate,
   makeMutable,
   useAnimatedStyle,
   useSharedValue,
@@ -15,21 +14,10 @@ import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { StyledAnimatedView } from "@/components/ui/utils/animated";
 
-/**
- * Icon-Animation beim Aktivieren – VORLÄUFIG vier Varianten zum Vergleich, je Tab eine
- * (Branch `ui-feinschliff`); danach bleibt eine für alle Tabs.
- * - `expand`: Icon federt kurz ein und aus
- * - `pop`: Icon hüpft nach oben
- * - `wiggle`: Icon wackelt
- * - `rise`: Icon gleitet von unten herein
- */
-export type TabAnimation = "expand" | "pop" | "wiggle" | "rise";
-
 /** Pille 56 × 30 (`h-7.5 w-14`). */
 const PILL_WIDTH = 56;
 const PILL_HEIGHT = 30;
 
-const KICK = { duration: 460, easing: Easing.out(Easing.quad) };
 const SLIDE = { duration: 280, easing: Easing.inOut(Easing.cubic) };
 
 /**
@@ -64,18 +52,16 @@ export function TabBarPill() {
 type TabBarButtonProps = TabTriggerSlotProps & {
   label: string;
   icon: LucideIcon;
-  animation: TabAnimation;
 };
 
 /**
  * Eintrag der Tab-Leiste (TabBar, Komponenten 10a). Aktiv: Icon und Text in `primary`, die
- * Pille gleitet herüber und die Farben blenden mit ihr über; sonst `soft`. Wird von `TabTrigger asChild` mit `isFocused`, `onPress`
- * usw. versorgt.
+ * Pille gleitet herüber und die Farben blenden mit ihr über; sonst `soft`.
+ * Wird von `TabTrigger asChild` mit `isFocused`, `onPress` usw. versorgt.
  */
 export function TabBarButton({
   label,
   icon,
-  animation,
   isFocused,
   style,
   ref,
@@ -88,21 +74,11 @@ export function TabBarButton({
   /** Dasselbe für den UI-Thread, dazu die Breite des Tabs – für den Farbverlauf. */
   const ownLeft = useSharedValue(-1);
   const ownWidth = useSharedValue(1);
-  /** Einmaliger Ablauf 0 → 1 beim Aktivieren – treibt das Icon. */
-  const kick = useSharedValue(1);
-  const mounted = useRef(false);
 
+  // Beim Wechsel gleitet die Pille herüber; beim Start setzt sie `onLayout` ohne Animation
   useEffect(() => {
-    // Beim ersten Rendern steht alles schon an Ort und Stelle (kein Animieren beim App-Start)
-    if (!mounted.current) {
-      mounted.current = true;
-      return;
-    }
-    if (!focused) return;
-    if (pillX.current !== null) movePill(pillX.current, true);
-    kick.value = 0;
-    kick.value = withTiming(1, KICK);
-  }, [focused, kick]);
+    if (focused && pillX.current !== null) movePill(pillX.current, true);
+  }, [focused]);
 
   /**
    * Wie weit die Pille über diesem Tab steht (0–1): Icon und Text blenden im Gleichlauf mit der
@@ -117,29 +93,6 @@ export function TabBarButton({
     if (pillLeft.value < 0 || ownLeft.value < 0) return { opacity: focused ? 0 : 1 };
     const distance = Math.abs(pillLeft.value - ownLeft.value) / ownWidth.value;
     return { opacity: Math.min(1, Math.max(0, distance)) };
-  });
-
-  const iconStyle = useAnimatedStyle(() => {
-    const k = kick.value;
-    switch (animation) {
-      case "expand":
-        return { transform: [{ scale: interpolate(k, [0, 0.3, 0.65, 1], [1, 0.82, 1.12, 1]) }] };
-      case "pop":
-        return {
-          transform: [
-            { translateY: interpolate(k, [0, 0.35, 1], [0, -5, 0]) },
-            { scale: interpolate(k, [0, 0.35, 1], [1, 1.1, 1]) },
-          ],
-        };
-      case "wiggle":
-        return {
-          transform: [
-            { rotate: `${interpolate(k, [0, 0.2, 0.45, 0.7, 1], [0, -14, 10, -5, 0])}deg` },
-          ],
-        };
-      case "rise":
-        return { transform: [{ translateY: interpolate(k, [0, 1], [6, 0]) }] };
-    }
   });
 
   return (
@@ -161,13 +114,14 @@ export function TabBarButton({
       {...props}
     >
       <View className="h-7.5 w-14 items-center justify-center">
-        <StyledAnimatedView style={iconStyle}>
-          <StyledAnimatedView style={inactiveStyle}>
-            <Icon as={icon} size="lg" className="text-soft" />
-          </StyledAnimatedView>
-          <StyledAnimatedView className="absolute inset-0" style={activeStyle}>
-            <Icon as={icon} size="lg" className="text-primary" />
-          </StyledAnimatedView>
+        <StyledAnimatedView style={inactiveStyle}>
+          <Icon as={icon} size="lg" className="text-soft" />
+        </StyledAnimatedView>
+        <StyledAnimatedView
+          className="absolute inset-0 items-center justify-center"
+          style={activeStyle}
+        >
+          <Icon as={icon} size="lg" className="text-primary" />
         </StyledAnimatedView>
       </View>
       <View className="items-center">

@@ -19,16 +19,16 @@ export default function TabsLayout() {
           {/* Gleitende Pille hinter dem aktiven Tab */}
           <TabBarPill />
           <TabTrigger name="lists" href="/" asChild>
-            <TabBarButton label={t("tabs.lists")} animation="expand" icon={List} />
+            <TabBarButton label={t("tabs.lists")} icon={List} />
           </TabTrigger>
           <TabTrigger name="products" href="/products" asChild>
-            <TabBarButton label={t("tabs.products")} animation="pop" icon={Package} />
+            <TabBarButton label={t("tabs.products")} icon={Package} />
           </TabTrigger>
           <TabTrigger name="transfer" href="/transfer" asChild>
-            <TabBarButton label={t("tabs.transfer")} animation="wiggle" icon={ArrowLeftRight} />
+            <TabBarButton label={t("tabs.transfer")} icon={ArrowLeftRight} />
           </TabTrigger>
           <TabTrigger name="recipes" href="/recipes" asChild>
-            <TabBarButton label={t("tabs.recipes")} animation="rise" icon={Soup} />
+            <TabBarButton label={t("tabs.recipes")} icon={Soup} />
           </TabTrigger>
         </View>
       </TabList>
