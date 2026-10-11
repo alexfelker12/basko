@@ -16,6 +16,8 @@ module.exports = function (api) {
           },
         },
       ],
+      // Drizzle-Migrationen (.sql) werden beim Bündeln als Text eingebettet
+      ['inline-import', { extensions: ['.sql'] }],
       'react-native-worklets/plugin',
     ],
   };

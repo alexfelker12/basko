@@ -1,1 +1,1 @@
-export const DATABASE_NAME = "basko.db"
+export const DATABASE_NAME = "basko.db";

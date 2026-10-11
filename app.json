@@ -79,9 +79,62 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store",
       "expo-sqlite",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Manrope",
+                "fontDefinitions": [
+                  {
+                    "path": "./node_modules/@expo-google-fonts/manrope/500Medium/Manrope_500Medium.ttf",
+                    "weight": 500
+                  },
+                  {
+                    "path": "./node_modules/@expo-google-fonts/manrope/600SemiBold/Manrope_600SemiBold.ttf",
+                    "weight": 600
+                  },
+                  {
+                    "path": "./node_modules/@expo-google-fonts/manrope/700Bold/Manrope_700Bold.ttf",
+                    "weight": 700
+                  },
+                  {
+                    "path": "./node_modules/@expo-google-fonts/manrope/800ExtraBold/Manrope_800ExtraBold.ttf",
+                    "weight": 800
+                  }
+                ]
+              }
+            ]
+          },
+          "ios": {
+            "fonts": [
+              "./node_modules/@expo-google-fonts/manrope/500Medium/Manrope_500Medium.ttf",
+              "./node_modules/@expo-google-fonts/manrope/600SemiBold/Manrope_600SemiBold.ttf",
+              "./node_modules/@expo-google-fonts/manrope/700Bold/Manrope_700Bold.ttf",
+              "./node_modules/@expo-google-fonts/manrope/800ExtraBold/Manrope_800ExtraBold.ttf"
+            ]
+          }
+        }
+      ],
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F6F4EE",
+          "dark": {
+            "backgroundColor": "#1B1E19"
+          }
+        }
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

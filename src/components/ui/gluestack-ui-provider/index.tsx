@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 import { View, ViewProps } from 'react-native';
 import { OverlayProvider } from '@gluestack-ui/core/overlay/creator';
 import { ToastProvider } from '@gluestack-ui/core/toast/creator';
-import { Appearance, ColorSchemeName } from "react-native";
 
-export type ModeType = 'light' | 'dark' | 'system';
+import { applyColorScheme, type ThemeMode } from '@/lib/theme';
+
+export type ModeType = ThemeMode;
 
 export function GluestackUIProvider({
   mode = 'system',
@@ -14,8 +15,9 @@ export function GluestackUIProvider({
   children?: React.ReactNode;
   style?: ViewProps['style'];
 }) {
-  useEffect(() => {
-    Appearance.setColorScheme(mode as ColorSchemeName);
+  // Basko: „system“ muss als „unspecified“ an Appearance gehen (RN 0.86).
+  useLayoutEffect(() => {
+    applyColorScheme(mode);
   }, [mode]);
 
   return (

@@ -30,7 +30,9 @@ Basko ist eine private Einkaufslisten-App (Expo / React Native) für Android und
 
 ### Noch zu installieren (laut Spezifikation)
 
-`@expo-google-fonts/manrope`, `expo-image-picker`, `expo-document-picker`, `expo-keep-awake`, `expo-haptics`, `expo-localization`, `buffer`; dev: `drizzle-kit`, `babel-plugin-inline-import` (Migrations-SQL wie in digi-list). gluestack-Komponenten per CLI: button, input, alert-dialog, modal, actionsheet, toast, badge, spinner, popover, image-viewer. `react-native-awesome-gallery` wird durch den gluestack Image Viewer ersetzt.
+`expo-image-picker`, `expo-document-picker`, `expo-keep-awake`, `expo-haptics`, `buffer` – jeweils in der Phase, die sie braucht. `react-native-awesome-gallery` wird durch den gluestack Image Viewer ersetzt (Phase 3).
+
+Seit Phase 1 vorhanden: `@expo-google-fonts/manrope`, `expo-localization`, `expo-navigation-bar` (Navigationsleiste folgt dem Thema), dev: `drizzle-kit`, `babel-plugin-inline-import`. `expo-secure-store` ist entfernt.
 
 ## Befehle
 
@@ -40,22 +42,29 @@ pnpm start            # expo start (Dev-Client)
 pnpm android          # expo start --android
 pnpm lint
 pnpm expo install <pkg>          # Expo-kompatible Version installieren
-pnpm dlx gluestack-ui@latest add <komponente>
+pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (src/lib/db/migrations)
 ```
+
+**gluestack-Komponenten:** Die CLI (`gluestack-ui@alpha add`) fällt derzeit auf die v4-Vorlagen zurück, die `cssInterop` aus NativeWind 4 nutzen und hier nicht laufen. Neue Komponenten daher aus GitHub `gluestack/gluestack-ui`, Branch `main`, Ordner `src/components/ui/<name>` übernehmen (NativeWind-5-Vorlagen) und auf unsere Tokens umstellen. `styled()` nie direkt auf `Animated.createAnimatedComponent(...)` anwenden – das lässt den TypeScript-Check hängen; stattdessen `src/components/ui/utils/animated.ts` nutzen.
 
 ## Ordner
 
 - `src/app` – Routen (expo-router). Tabs: Listen (Start), Produkte, Transfer, Rezepte. Stack-Screens ohne Tab-Leiste: Einkaufsmodus, Liste bearbeiten, Einstellungen, Ladenreihenfolge, Geräteauswahl, Rezept-Details.
 - `src/components/ui` – gluestack-Komponenten (generiert, an unsere Tokens angepasst)
 - `src/components` – eigene Komponenten (SwipeRow, Stepper, ColorSwatchPicker …)
-- `src/lib/db` – Drizzle-Client und Schema (`schema/`); Migrationen kommen nach `src/lib/db/migrations`
-- `src/lib` – Query-Client, Konstanten, später Queries, Transfer, i18n
+- `src/lib/db` – Drizzle-Client, Schema (`schema/`), Migrationen (`migrations/`, generiert), `seed.ts` (Standard-Kategorien + „Sonstiges“), `purge.ts` (Soft-Deletes beim Start), `id.ts` (`newId()` – IDs immer explizit setzen, kein `$defaultFn` mit expo-crypto im Schema)
+- `src/lib/i18n` – `t("schlüssel", { platzhalter })`, Texte in `locales/de.ts`; Pluralformen `{ one, other }` mit `count`
+- `src/lib` – außerdem `settings.ts` (Schlüssel/Typen der `settings`-Tabelle), `theme.ts`, `units.ts` (Einheiten-Codes, Schritte), `list-colors.ts`, Query-Client
+- `src/hooks` – `useAppSetup` (Start hinter dem Splash), `useSettings`/`useUpdateSetting`
 
 ## Konventionen
 
 - TypeScript strict, Import-Alias `@/` → `src/`.
 - Code und Bezeichner auf Englisch, UI-Texte auf Deutsch – aber **nie hart im Code**: alle Texte über die eigene i18n-Schicht mit `expo-localization` (vorerst nur Deutsch). Rezeptinhalte bleiben Englisch (API).
-- Styling nur über NativeWind-Klassen mit den semantischen Tokens `bg`, `surface`, `ink`, `soft`, `line`, `chip`, `primary`, `primary-ink`, `amber`, `danger` (hell/dunkel, Werte in der Spezifikation). Keine Hex-Werte in Komponenten – Ausnahme: Listenfarben Blau `#3E6B8A`/Lila `#7A5CA3`, zentral definiert.
+- Styling nur über NativeWind-Klassen mit den semantischen Tokens `bg`, `surface`, `ink`, `soft`, `line`, `chip`, `primary`, `primary-ink`, `amber`, `danger` (hell/dunkel, Werte in der Spezifikation, definiert in `src/global.css`). Die Tailwind-Farbskalen sind entfernt; zusätzlich gibt es nur `white`, `black` und die Listenfarben `list-blue`/`list-purple`. Keine Hex-Werte in Komponenten.
+- Maß-Tokens: `rounded-card` (14), `rounded-thumb` (10), `rounded-full` (999), `px-page` (18), `py-row` (13).
+- Texte immer mit `Text` aus `@/components/ui/text` (Manrope, Standard 500). Manrope ist nativ eingebunden (expo-font-Plugin in `app.json`), Gewichte über `font-medium` … `font-extrabold`.
+- Units werden als Code gespeichert (`pcs`, `kg`, …) und über `t("units.<code>")` angezeigt.
 - Schrift Manrope 500–800; Icons `lucide-react-native` (nächstliegendes Icon).
 - Maße: Radius 14 / 999 / 10, Seitenabstand 18, Touch-Fläche min. 44.
 - IDs: UUID als Text (`expo-crypto`).
@@ -71,14 +80,14 @@ pnpm dlx gluestack-ui@latest add <komponente>
 - Sortierung in Einkaufsmodus **und** Bearbeiten: Kategorien in Ladenreihenfolge, darin alphabetisch (im Einkaufsmodus offene vor erledigten).
 - Löschen mit Rückgängig = Soft-Delete über `deletedAt`, endgültig nach 5 s und beim App-Start.
 - Namenskollision bei Listen → „Name (n)“ mit nächster freier Zahl.
-- Einstellungen liegen in der Tabelle `settings` (nicht SecureStore) – der aktuelle `ThemeProvider` mit SecureStore wird ersetzt.
+- Einstellungen liegen in der Tabelle `settings` (nicht SecureStore), werden beim Start synchron gelesen und über `useSettings()` aus dem Query-Cache gelesen.
 - Transfer: Haken werden nicht übertragen; Konflikt = gleicher Produktname mit anderer Kategorie oder anderen Fotos (Vergleich per Datei-Hash); unbekannte Kategorie → „Sonstiges“. Format-Versionsfeld im JSON.
 - Dateien: Liste `.basko`, Sicherung `.baskobackup` (beide auch von außerhalb öffnbar).
 - Rezepte: API-Key aus `EXPO_PUBLIC_API_NINJAS_KEY` (`.env`), Suche nur nach Titel bei Bestätigung, max. 5 Treffer, kein „Mehr laden“.
 
 ## Umsetzungsphasen
 
-1. Fundament: Tokens hell/dunkel, gluestack-Theming, Manrope, Tab-Leiste, i18n, Drizzle-Schema + Migrationen + Seed (inkl. „Sonstiges“), `settings`, Theme beim Start, Basis-Komponenten
+1. ✓ Fundament: Tokens hell/dunkel, gluestack-Theming, Manrope, Tab-Leiste, i18n, Drizzle-Schema + Migrationen + Seed (inkl. „Sonstiges“), `settings`, Theme beim Start, gluestack-Basiskomponenten (eigene Komponenten wie SwipeRow, Stepper kommen mit ihrer Phase)
 2. Listen-Übersicht, Liste bearbeiten, Einkaufsmodus
 3. Produkte (Fotos, Bildansicht), Kategorien, Ladenreihenfolge
 4. Transfer über Netzwerk, Datei-Export/-Import
