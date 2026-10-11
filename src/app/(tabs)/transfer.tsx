@@ -3,6 +3,7 @@ import { DownloadIcon } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 
 import { ScreenHeader } from "@/components/screen-header";
+import { ScreenPattern } from "@/components/screen-pattern";
 import { HistoryRow } from "@/components/transfer/history-row";
 import { ImportFlow } from "@/components/transfer/import-flow";
 import { Button, ButtonText } from "@/components/ui/button";
@@ -36,6 +37,8 @@ export default function TransferScreen() {
 
   return (
     <View className="flex-1 bg-bg">
+      {/* Hintergrundmuster (Punktraster) hinter dem Inhalt */}
+      <ScreenPattern />
       <ScreenHeader title={t("transfer.title")} />
 
       <ScrollView contentContainerClassName="pb-6">

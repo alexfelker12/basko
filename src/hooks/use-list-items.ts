@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { localQuery } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import {
   addListItem,
@@ -12,7 +13,7 @@ import {
 } from "@/lib/queries/list-items";
 
 export function useListItems(listId: string) {
-  return useQuery({ queryKey: queryKeys.listItems(listId), queryFn: () => getListItems(listId) });
+  return useQuery(localQuery(queryKeys.listItems(listId), () => getListItems(listId)));
 }
 
 function useItemMutation<TVariables, TResult>(fn: (variables: TVariables) => TResult) {

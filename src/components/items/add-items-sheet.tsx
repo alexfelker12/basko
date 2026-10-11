@@ -113,9 +113,20 @@ export function AddItemsSheets({ listId, items, step, onStepChange, onDeleteItem
         onClose={close}
         onClosed={() => setProductVisible(false)}
         onCreated={(product) => onStepChange({ kind: "add", product })}
+        onBack={backToSearch}
       />
 
-      <Sheet isOpen={itemOpen} onDismiss={close} onClosed={() => setItemVisible(false)}>
+      {/* Android-Zurück wie „‹“: aus der Suche heraus zurück zur Suche, sonst schließen */}
+      <Sheet
+        isOpen={itemOpen}
+        onDismiss={close}
+        onClosed={() => setItemVisible(false)}
+        onBack={
+          itemStep?.kind === "add" || (itemStep?.kind === "edit" && itemStep.fromSearch)
+            ? backToSearch
+            : undefined
+        }
+      >
         {itemStep?.kind === "add" ? (
           <ItemForm
             key={itemStep.product.id}

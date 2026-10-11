@@ -11,6 +11,7 @@ import { ListActionsSheet } from "@/components/lists/list-actions-sheet";
 import { ListRenameRow, ListRow } from "@/components/lists/list-row";
 import { NewListDialog } from "@/components/lists/new-list-dialog";
 import { ScreenHeader } from "@/components/screen-header";
+import { ScreenPattern } from "@/components/screen-pattern";
 import { SWIPE_ACTION_WIDTH, SwipeRow } from "@/components/swipe-row";
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { StyledAnimatedView } from "@/components/ui/utils/animated";
@@ -84,9 +85,45 @@ export default function ListsScreen() {
   };
 
   const closeMenuThen = (action: (list: ListSummary) => void) => () => {
+    // Während der Export läuft, bleibt das Menü stehen
+    if (exportList.isPending) return;
     const list = menuList;
     setMenuList(null);
     if (list) action(list);
+  };
+
+  // Wartet der Export auf das Schließen des Menüs? (siehe `exportMenuList`)
+  const menuOpen = useRef(false);
+  const menuClosedWaiter = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    menuOpen.current = menuList !== null;
+  }, [menuList]);
+
+  /** Menü schließen und warten, bis die Schließ-Animation fertig ist. */
+  const closeMenuAndWait = () =>
+    new Promise<void>((resolve) => {
+      if (!menuOpen.current) return resolve();
+      menuClosedWaiter.current = resolve;
+      setMenuList(null);
+    });
+
+  /**
+   * „Als Datei exportieren“: Das Menü bleibt mit Spinner offen, bis die Datei fertig ist. Dann
+   * schließt es sich, und erst danach öffnet sich das Teilen-Menü – sonst friert Android die
+   * Schließ-Animation unter dem Teilen-Menü ein.
+   */
+  const exportMenuList = () => {
+    if (!menuList || exportList.isPending) return;
+    exportList.mutate(
+      { listId: menuList.id, beforeShare: closeMenuAndWait },
+      {
+        onError: (error) => {
+          console.warn("[transfer] export", error);
+          showToast({ title: t("errors.generic") });
+        },
+        onSettled: () => setMenuList(null),
+      }
+    );
   };
 
   const create = (values: ListFormValues) => {
@@ -102,6 +139,8 @@ export default function ListsScreen() {
 
   return (
     <View className="flex-1 bg-bg">
+      {/* Hintergrundmuster (Punktraster) hinter dem Inhalt */}
+      <ScreenPattern />
       <ScreenHeader title={t("lists.title")}>
         {/* Einstellungen (8a) – vorerst nur mit der Ladenreihenfolge, der Rest folgt in Phase 6 */}
         <Button
@@ -176,6 +215,10 @@ export default function ListsScreen() {
       <ListActionsSheet
         list={menuList}
         onClose={() => setMenuList(null)}
+        onClosed={() => {
+          menuClosedWaiter.current?.();
+          menuClosedWaiter.current = null;
+        }}
         onEdit={closeMenuThen((list) =>
           router.push({ pathname: "/list/[id]/edit", params: { id: list.id } })
         )}
@@ -183,14 +226,8 @@ export default function ListsScreen() {
         onSend={closeMenuThen((list) =>
           router.push({ pathname: "/transfer/send/[listId]", params: { listId: list.id } })
         )}
-        onExport={closeMenuThen((list) =>
-          exportList.mutate(list.id, {
-            onError: (error) => {
-              console.warn("[transfer] export", error);
-              showToast({ title: t("errors.generic") });
-            },
-          })
-        )}
+        onExport={exportMenuList}
+        exporting={exportList.isPending}
         onDuplicate={closeMenuThen((list) => duplicateList.mutate(list.id))}
         onDelete={closeMenuThen(deleteList)}
       />

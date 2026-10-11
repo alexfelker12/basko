@@ -3,6 +3,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useZeroconf } from "react-native-zeroconf";
 
 import { collator } from "@/lib/i18n";
+import { localQuery } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
 import { clearTransferHistory, getTransferHistory } from "@/lib/queries/transfer-history";
 import { exportListFile } from "@/lib/transfer/file";
@@ -26,7 +27,7 @@ export function useTransfer() {
 }
 
 export function useTransferHistory() {
-  return useQuery({ queryKey: queryKeys.transferHistory, queryFn: getTransferHistory });
+  return useQuery(localQuery(queryKeys.transferHistory, getTransferHistory));
 }
 
 export function useClearTransferHistory() {
@@ -41,7 +42,13 @@ export function useClearTransferHistory() {
 export function useExportList() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (listId: string) => exportListFile(listId),
+    mutationFn: ({
+      listId,
+      beforeShare,
+    }: {
+      listId: string;
+      beforeShare?: () => void | Promise<void>;
+    }) => exportListFile(listId, beforeShare),
     onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.transferHistory }),
   });
 }

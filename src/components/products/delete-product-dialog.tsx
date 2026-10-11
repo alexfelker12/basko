@@ -19,7 +19,9 @@ interface DeleteProductDialogProps {
  */
 export function DeleteProductDialog({ product, onClose, onConfirm }: DeleteProductDialogProps) {
   const shown = useLastDefined(product);
-  const { data: listCount } = useProductListCount(product?.id ?? null);
+  // Über `shown`, damit der Text beim Zuschieben stehen bleibt; die Zahl steht dank
+  // `localQuery` schon beim ersten Rendern fest
+  const { data: listCount } = useProductListCount(shown?.id ?? null);
 
   return (
     <Dialog isOpen={product !== null} onClose={onClose}>
@@ -28,13 +30,11 @@ export function DeleteProductDialog({ product, onClose, onConfirm }: DeleteProdu
           <Text role="heading" className="text-xl font-extrabold">
             {t("deleteProduct.title", { name: shown.name })}
           </Text>
-          {listCount !== undefined ? (
-            <Text className="text-sm text-soft">
-              {listCount > 0
-                ? t("deleteProduct.usedIn", { count: listCount })
-                : t("deleteProduct.unused")}
-            </Text>
-          ) : null}
+          <Text className="text-sm text-soft">
+            {listCount > 0
+              ? t("deleteProduct.usedIn", { count: listCount })
+              : t("deleteProduct.unused")}
+          </Text>
           <AlertDialogFooter>
             <Button variant="secondary" onPress={onClose}>
               <ButtonText>{t("common.cancel")}</ButtonText>

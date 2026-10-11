@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { ChevronRightIcon } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
+import { ScreenPattern } from "@/components/screen-pattern";
 import { StackHeader } from "@/components/stack-header";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -16,6 +17,8 @@ export default function SettingsScreen() {
 
   return (
     <View className="flex-1 bg-bg">
+      {/* Hintergrundmuster (Punktraster) hinter dem Inhalt */}
+      <ScreenPattern />
       <StackHeader title={t("settings.title")} />
       <View className="mx-page border-t border-line">
         <Pressable

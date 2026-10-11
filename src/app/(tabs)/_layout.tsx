@@ -2,7 +2,7 @@ import { TabList, Tabs, TabSlot, TabTrigger } from "expo-router/ui";
 import { ArrowLeftRight, List, Package, Soup } from "lucide-react-native";
 import { View } from "react-native";
 
-import { TabBarButton } from "@/components/tab-bar";
+import { TabBarButton, TabBarPill } from "@/components/tab-bar";
 import { t } from "@/lib/i18n";
 
 /**
@@ -16,6 +16,8 @@ export default function TabsLayout() {
 
       <TabList asChild>
         <View className="flex-row border-t border-line bg-bg px-1 pb-0.5 pt-2">
+          {/* Gleitende Pille hinter dem aktiven Tab */}
+          <TabBarPill />
           <TabTrigger name="lists" href="/" asChild>
             <TabBarButton label={t("tabs.lists")} icon={List} />
           </TabTrigger>
