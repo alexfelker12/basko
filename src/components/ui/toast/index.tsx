@@ -1,16 +1,13 @@
 'use client';
 // Basko: Toast mit Aktion (Komponenten 10a) – ink-Hintergrund, bg-Text,
 // Aktion wie „Rückgängig“ in amber. Basis: gluestack Toast, auf einen Stil reduziert.
-// Platzierung (96 px über dem unteren Rand) und Dauer setzt der Aufrufer über useToast().show().
-import { createToastHook } from '@gluestack-ui/core/toast/creator';
+// Platzierung, Stapel und Dauer übernimmt AppToastProvider (components/toast-host).
 import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils';
 import { tva } from '@gluestack-ui/utils/nativewind-utils';
 import { StyledAnimatedView } from '../utils/animated';
 import React from 'react';
 import { AccessibilityInfo, Pressable, Text, View } from 'react-native';
 import { FadeInDown, FadeOutDown } from 'react-native-reanimated';
-
-const useToast = createToastHook(View);
 
 const toastStyle = tva({
   base: 'min-h-13 flex-row items-center gap-2.5 rounded-card bg-ink py-2 pl-4 pr-1.5 web:pointer-events-auto',
@@ -124,4 +121,4 @@ ToastTitle.displayName = 'ToastTitle';
 ToastDescription.displayName = 'ToastDescription';
 ToastAction.displayName = 'ToastAction';
 
-export { Toast, ToastAction, ToastDescription, ToastTitle, useToast };
+export { Toast, ToastAction, ToastDescription, ToastTitle };
