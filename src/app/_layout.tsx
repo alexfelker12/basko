@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { ErrorScreen } from "@/components/error-screen";
+import { AppToastProvider } from "@/components/toast-host";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { useAppSetup } from "@/hooks/use-app-setup";
 import { useSettings } from "@/hooks/use-settings";
@@ -27,22 +28,25 @@ function ThemedApp() {
   const { theme } = useSettings();
 
   return (
-    <GluestackUIProvider mode={theme}>
-      {/* Erst nach dem ersten Layout im richtigen Thema verschwindet der Splash */}
-      <View className="flex-1 bg-bg" onLayout={hideSplash}>
-        {/* Rand bis Rand: Status- und Navigationsleiste folgen dem Thema */}
-        <StatusBar style="auto" />
-        <NavigationBar style="auto" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: "transparent" },
-          }}
-        >
-          <Stack.Screen name="(tabs)" />
-        </Stack>
-      </View>
-    </GluestackUIProvider>
+    // Toasts liegen außerhalb, damit sie über allen Overlays (Sheets, Dialoge) erscheinen
+    <AppToastProvider>
+      <GluestackUIProvider mode={theme}>
+        {/* Erst nach dem ersten Layout im richtigen Thema verschwindet der Splash */}
+        <View className="flex-1 bg-bg" onLayout={hideSplash}>
+          {/* Rand bis Rand: Status- und Navigationsleiste folgen dem Thema */}
+          <StatusBar style="auto" />
+          <NavigationBar style="auto" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: "transparent" },
+            }}
+          >
+            <Stack.Screen name="(tabs)" />
+          </Stack>
+        </View>
+      </GluestackUIProvider>
+    </AppToastProvider>
   );
 }
 

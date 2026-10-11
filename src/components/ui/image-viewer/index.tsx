@@ -47,7 +47,7 @@ const imageViewerContentStyle = tva({
 });
 
 const imageViewerCloseButtonStyle = tva({
-  base: 'absolute top-12 right-4 z-50 w-10 h-10 rounded-full bg-black/60 justify-center items-center',
+  base: 'absolute top-12 right-4 z-50 w-10 h-10 rounded-[999px] bg-black/60 justify-center items-center',
 });
 
 const imageViewerNavigationStyle = tva({
@@ -55,7 +55,7 @@ const imageViewerNavigationStyle = tva({
 });
 
 const imageViewerNavButtonStyle = tva({
-  base: 'w-12 h-12 rounded-full bg-black/50 justify-center items-center',
+  base: 'w-12 h-12 rounded-[999px] bg-black/50 justify-center items-center',
 });
 
 const imageViewerCounterStyle = tva({
@@ -63,7 +63,7 @@ const imageViewerCounterStyle = tva({
 });
 
 const imageViewerCounterTextStyle = tva({
-  base: 'text-white text-sm font-medium bg-black/60 px-4 py-2 rounded-full',
+  base: 'text-white text-sm font-medium bg-black/60 px-4 py-2 rounded-[999px]',
 });
 
 interface ImageItem {

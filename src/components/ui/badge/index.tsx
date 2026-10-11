@@ -12,7 +12,7 @@ const SCOPE = 'BADGE';
 // Basko: Badge (Komponenten 10a) – „zuletzt genutzt“, „in Liste“, „bereits vorhanden“ = neutral;
 // „⚠ Konflikt“, „neues Produkt“ = warning (amber-Tönung).
 const badgeStyle = tva({
-  base: 'flex-row items-center gap-1 self-start rounded-full px-[9px] py-[3px]',
+  base: 'flex-row items-center gap-1 self-start rounded-[999px] px-2.25 py-0.75',
   variants: {
     variant: {
       neutral: 'bg-chip',
@@ -21,7 +21,7 @@ const badgeStyle = tva({
   },
 });
 const badgeTextStyle = tva({
-  base: 'font-sans text-[11px]',
+  base: 'font-sans text-xs',
   parentVariants: {
     variant: {
       neutral: 'font-bold text-soft',

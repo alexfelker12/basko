@@ -8,7 +8,12 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { styled } from 'nativewind';
-import Animated, { type EntryOrExitLayoutType } from 'react-native-reanimated';
+import Animated, {
+  type EntryOrExitLayoutType,
+  type LayoutAnimationFunction,
+  type ILayoutAnimationBuilder,
+  type useAnimatedStyle,
+} from 'react-native-reanimated';
 
 /**
  * Basko: Reanimated-Komponenten mit schlanken Prop-Typen.
@@ -20,11 +25,19 @@ import Animated, { type EntryOrExitLayoutType } from 'react-native-reanimated';
 export type LayoutAnimationProps = {
   entering?: EntryOrExitLayoutType;
   exiting?: EntryOrExitLayoutType;
+  /** Layout-Übergang, z. B. `LinearTransition` – Einträge gleiten an ihre neue Position. */
+  layout?: ILayoutAnimationBuilder | LayoutAnimationFunction;
 };
 
-export const AnimatedView = Animated.createAnimatedComponent(View) as unknown as ComponentType<
-  ViewProps & LayoutAnimationProps & { ref?: Ref<View> }
->;
+/** Statischer Style oder Ergebnis von `useAnimatedStyle`. */
+type AnimatedViewStyle = StyleProp<ViewStyle> | ReturnType<typeof useAnimatedStyle>;
+
+type AnimatedViewProps = Omit<ViewProps, 'style'> &
+  LayoutAnimationProps & { style?: AnimatedViewStyle; ref?: Ref<View> };
+
+export const AnimatedView = Animated.createAnimatedComponent(
+  View
+) as unknown as ComponentType<AnimatedViewProps>;
 
 // `style`/`children` ohne Funktions-Varianten von Pressable – sonst wird der Typ für styled() zu komplex.
 type AnimatedPressableProps = Omit<PressableProps, 'style' | 'children'> &
@@ -43,7 +56,7 @@ type WithClassName<P> = P & { className?: string };
 /** Mit `className` (NativeWind) – explizit typisiert, damit styled() nicht inferieren muss. */
 export const StyledAnimatedView = styled(AnimatedView as ComponentType<any>, {
   className: 'style',
-}) as ComponentType<WithClassName<ViewProps & LayoutAnimationProps & { ref?: Ref<View> }>>;
+}) as ComponentType<WithClassName<AnimatedViewProps>>;
 
 export const StyledAnimatedPressable = styled(AnimatedPressable as ComponentType<any>, {
   className: 'style',

@@ -42,6 +42,32 @@ function resolveLocale(): Locale {
 /** Aktive Sprache, einmal beim Start bestimmt. */
 export const locale: Locale = resolveLocale();
 
+/** BCP-47-Tag für Intl (Zahlen, Sortierung). */
+const intlLocale: Record<Locale, string> = { de: "de-DE" };
+
+const numberFormats = new Map<string, Intl.NumberFormat>();
+
+/** Zahl im Format der aktiven Sprache, z. B. „1,0“ oder „0,75“. */
+export function formatNumber(
+  value: number,
+  { min = 0, max = 2 }: { min?: number; max?: number } = {}
+): string {
+  const key = `${min}-${max}`;
+  let format = numberFormats.get(key);
+  if (!format) {
+    format = new Intl.NumberFormat(intlLocale[locale], {
+      minimumFractionDigits: min,
+      maximumFractionDigits: max,
+      useGrouping: false,
+    });
+    numberFormats.set(key, format);
+  }
+  return format.format(value);
+}
+
+/** Alphabetische Sortierung der aktiven Sprache, ohne Beachtung der Groß-/Kleinschreibung. */
+export const collator = new Intl.Collator(intlLocale[locale], { sensitivity: "base", numeric: true });
+
 /** Alle gültigen Schlüssel als Punkt-Pfade, z. B. "tabs.lists". */
 type Paths<T, Prefix extends string = ""> = {
   [K in keyof T & string]: T[K] extends string | PluralForms

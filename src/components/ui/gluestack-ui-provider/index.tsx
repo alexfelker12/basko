@@ -1,7 +1,6 @@
 import React, { useLayoutEffect } from 'react';
 import { View, ViewProps } from 'react-native';
 import { OverlayProvider } from '@gluestack-ui/core/overlay/creator';
-import { ToastProvider } from '@gluestack-ui/core/toast/creator';
 
 import { applyColorScheme, type ThemeMode } from '@/lib/theme';
 
@@ -27,9 +26,8 @@ export function GluestackUIProvider({
         props.style,
       ]}
     >
-      <OverlayProvider>
-        <ToastProvider>{props.children}</ToastProvider>
-      </OverlayProvider>
+      {/* Basko: Toasts kommen aus AppToastProvider (components/toast-host), der außen liegt */}
+      <OverlayProvider>{props.children}</OverlayProvider>
     </View>
   );
 }
