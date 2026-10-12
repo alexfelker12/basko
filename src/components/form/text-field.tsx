@@ -1,14 +1,14 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   Pressable,
   View,
   type BlurEvent,
   type FocusEvent,
-  type TextInput,
   type TextInputProps,
 } from "react-native";
 
 import { Input, InputField } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
 import { useSheetKeyboardHandlers } from "@/hooks/use-sheet-keyboard";
 import { useFieldContext } from "@/lib/form/form-context";
 
@@ -28,9 +28,9 @@ type TextFieldProps = Pick<
   /** Ausgegraut und nicht bearbeitbar (z. B. abgewählte Zutat in 7e). */
   isDisabled?: boolean;
   /**
-   * Für Felder in scrollenden Listen (7e): Das Feld nimmt Berührungen erst an, wenn es den Fokus
-   * hat; vorher fokussiert ein Tipp es. Sonst hält Android ein Feld mit langem Text fest, sobald
-   * es waagerecht scrollen kann – ein senkrechter Wisch darauf scrollte die Liste nicht.
+   * Für Felder in scrollenden Listen (7e): Ohne Fokus steht nur eine Anzeige im Feld-Look da, ein
+   * Tipp macht daraus das echte Feld. Sonst hält Android ein Feld mit langem Text fest, sobald es
+   * waagerecht scrollen kann – ein senkrechter Wisch darauf scrollte die Liste nicht.
    */
   tapToFocus?: boolean;
   className?: string;
@@ -50,46 +50,53 @@ export function TextFieldComponent({
   const field = useFieldContext<string>();
   const sheetKeyboard = useSheetKeyboardHandlers();
   const error = fieldError(field.state.meta);
-  const inputRef = useRef<TextInput>(null);
-  const [focused, setFocused] = useState(false);
+  // tapToFocus: Erst ein Tipp macht aus der Anzeige ein echtes Feld (mit autoFocus), beim
+  // Verlassen wird es wieder zur Anzeige. Programmatisches focus() auf ein durch pointerEvents
+  // gesperrtes Feld verlor auf Android sofort den Fokus (er sprang ins erste Feld des Modals).
+  const [editing, setEditing] = useState(false);
+  const accessibleLabel = label ?? accessibilityLabel;
 
-  const input = (
-    <Input isInvalid={Boolean(error)} isDisabled={isDisabled} size={size}>
-      <InputField
-        {...inputProps}
-        // Die Ref-Typen von InputField (gluestack) zeigen auf die Props statt auf das TextInput
-        ref={inputRef as never}
-        editable={!isDisabled}
-        value={field.state.value}
-        onChangeText={field.handleChange}
-        onFocus={(event: FocusEvent) => {
-          setFocused(true);
-          sheetKeyboard?.onFocus(event);
-        }}
-        onBlur={(event: BlurEvent) => {
-          setFocused(false);
-          sheetKeyboard?.onBlur(event);
-          field.handleBlur();
-          onBlur?.();
-        }}
-        aria-label={label ?? accessibilityLabel}
-      />
-    </Input>
-  );
+  if (tapToFocus && !editing) {
+    return (
+      <FieldShell label={label} error={error} className={className}>
+        <Pressable
+          onPress={() => setEditing(true)}
+          disabled={isDisabled}
+          role="button"
+          aria-label={accessibleLabel}
+          aria-disabled={isDisabled}
+        >
+          <View pointerEvents="none">
+            <Input isInvalid={Boolean(error)} isDisabled={isDisabled} size={size}>
+              <Text numberOfLines={1} className="flex-1 text-base font-semibold text-ink">
+                {field.state.value}
+              </Text>
+            </Input>
+          </View>
+        </Pressable>
+      </FieldShell>
+    );
+  }
 
   return (
     <FieldShell label={label} error={error} className={className}>
-      {tapToFocus ? (
-        <Pressable
-          onPress={() => inputRef.current?.focus()}
-          disabled={isDisabled || focused}
-          accessible={false}
-        >
-          <View pointerEvents={focused ? "auto" : "none"}>{input}</View>
-        </Pressable>
-      ) : (
-        input
-      )}
+      <Input isInvalid={Boolean(error)} isDisabled={isDisabled} size={size}>
+        <InputField
+          {...inputProps}
+          autoFocus={tapToFocus || inputProps.autoFocus}
+          editable={!isDisabled}
+          value={field.state.value}
+          onChangeText={field.handleChange}
+          onFocus={(event: FocusEvent) => sheetKeyboard?.onFocus(event)}
+          onBlur={(event: BlurEvent) => {
+            sheetKeyboard?.onBlur(event);
+            field.handleBlur();
+            onBlur?.();
+            setEditing(false);
+          }}
+          aria-label={accessibleLabel}
+        />
+      </Input>
     </FieldShell>
   );
 }
