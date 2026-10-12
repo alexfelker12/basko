@@ -44,6 +44,33 @@
               "pathPattern": ".*\\.basko"
             }
           ]
+        },
+        {
+          "action": "VIEW",
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ],
+          "data": [
+            {
+              "scheme": "file",
+              "mimeType": "application/x-basko-backup"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/x-basko-backup"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "application/octet-stream",
+              "pathPattern": ".*\\.baskobackup"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/octet-stream",
+              "pathPattern": ".*\\.baskobackup"
+            }
+          ]
         }
       ]
     },
@@ -56,6 +83,13 @@
             "CFBundleTypeRole": "Viewer",
             "LSItemContentTypes": [
               "com.alexfelker.basko.list"
+            ]
+          },
+          {
+            "CFBundleTypeName": "Basko-Sicherung",
+            "CFBundleTypeRole": "Viewer",
+            "LSItemContentTypes": [
+              "com.alexfelker.basko.backup"
             ]
           }
         ],
@@ -71,6 +105,19 @@
                 "basko"
               ],
               "public.mime-type": "application/x-basko"
+            }
+          },
+          {
+            "UTTypeIdentifier": "com.alexfelker.basko.backup",
+            "UTTypeDescription": "Basko-Sicherung",
+            "UTTypeConformsTo": [
+              "public.data"
+            ],
+            "UTTypeTagSpecification": {
+              "public.filename-extension": [
+                "baskobackup"
+              ],
+              "public.mime-type": "application/x-basko-backup"
             }
           }
         ],
