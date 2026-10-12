@@ -1,21 +1,55 @@
-import { readTransferFile } from "@/lib/transfer/file";
+import { parseBackup } from "@/lib/backup/format";
+import { openRestore, reportRestoreError, restoreErrorOf } from "@/lib/backup/session";
+import { readFileBytes } from "@/lib/transfer/file";
+import { containerType, decodeContainer, parseTransfer } from "@/lib/transfer/format";
 import { notifyFileUnreadable, openFileImport } from "@/lib/transfer/session";
 
 /**
- * Geöffnete `.basko`-Dateien (Spezifikation → Datei-Export und -Import): Android liefert sie per
- * Intent als `content://`/`file://`, iOS als `file://`. Die Datei wird im Hintergrund gelesen,
- * Basko wechselt sofort in den Transfer-Tab und zeigt dort die Vorschau (6h).
+ * Von außen geöffnete Dateien: Android liefert sie per Intent als `content://`/`file://`, iOS als
+ * `file://`. Beide Dateitypen teilen sich den Container, der Typ im Kopf entscheidet:
+ * - `.basko` (Datei-Export und -Import) → Transfer-Tab mit der Vorschau (6h)
+ * - `.baskobackup` (8e) → „Daten ersetzen?“ über dem aktuellen Screen, beim Kaltstart über den Listen
+ *
+ * `null` heißt: bleiben, wo man ist. Fehler werden nie geworfen (sonst stürzt der Router ab),
+ * sondern als Toast gemeldet.
  */
 const FILE_URI = /^(content|file):\/\//i;
 
-export function redirectSystemPath({ path }: { path: string; initial: boolean }): string {
+export async function redirectSystemPath({
+  path,
+  initial,
+}: {
+  path: string;
+  initial: boolean;
+}): Promise<string | null> {
   if (!FILE_URI.test(path)) return path;
+  const stay = initial ? "/" : null;
 
-  readTransferFile(path)
-    .then(openFileImport)
-    .catch((error: unknown) => {
-      console.warn("[transfer] file import", error);
-      notifyFileUnreadable();
-    });
+  let container;
+  try {
+    container = decodeContainer(await readFileBytes(path));
+  } catch (error) {
+    console.warn("[file] open", error);
+    notifyFileUnreadable();
+    return stay;
+  }
+
+  if (containerType(container.raw) === "backup") {
+    try {
+      openRestore(parseBackup(container));
+    } catch (error) {
+      console.warn("[backup] open", error);
+      reportRestoreError(restoreErrorOf(error));
+    }
+    return stay;
+  }
+
+  try {
+    openFileImport(parseTransfer(container));
+  } catch (error) {
+    console.warn("[transfer] file import", error);
+    notifyFileUnreadable();
+    return stay;
+  }
   return "/transfer";
 }

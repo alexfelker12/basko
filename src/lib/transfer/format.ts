@@ -8,7 +8,8 @@ import { UNITS } from "@/lib/units";
 /**
  * Binärformat für Netzwerk-Transfer und `.basko`-Datei (Spezifikation → 6 „Format“), wie in
  * digi-list: [u32 JSON-Länge][JSON][u32 Anzahl Bilder], je Bild [u32 Namenslänge][Name]
- * [u32 Bytes-Länge][Bytes]. Alle Zahlen Big Endian.
+ * [u32 Bytes-Länge][Bytes]. Alle Zahlen Big Endian. Derselbe Rahmen trägt die Sicherung
+ * (`.baskobackup`, `type: "backup"`, siehe `lib/backup/format.ts`).
  */
 export const TRANSFER_FORMAT_VERSION = 1;
 
@@ -75,6 +76,9 @@ export type TransferItem = TransferPayload["items"][number];
 /** Bilddaten zum Paket, Schlüssel = Dateiname aus `imageRefSchema.file`. */
 export type TransferImages = Map<string, Uint8Array>;
 
+/** Rohinhalt eines Pakets: JSON (noch ungeprüft) und Bilder. */
+export type DecodedContainer = { raw: unknown; images: TransferImages };
+
 export type DecodedTransfer = { payload: TransferPayload; images: TransferImages };
 
 /** Kaputte oder fremde Daten bzw. eine neuere `formatVersion` („Datei konnte nicht gelesen werden“). */
@@ -95,6 +99,11 @@ function u32(value: number): Buffer {
 }
 
 export function encodeTransfer(payload: TransferPayload, images: TransferImages): Buffer {
+  return encodeContainer(payload, images);
+}
+
+/** Schreibt JSON und Bilder in den Binärrahmen (Liste und Sicherung). */
+export function encodeContainer(payload: unknown, images: TransferImages): Buffer {
   const json = Buffer.from(JSON.stringify(payload), "utf8");
   const parts: Buffer[] = [u32(json.length), json, u32(images.size)];
   for (const [fileName, bytes] of images) {
@@ -104,7 +113,8 @@ export function encodeTransfer(payload: TransferPayload, images: TransferImages)
   return Buffer.concat(parts);
 }
 
-export function decodeTransfer(data: Uint8Array): DecodedTransfer {
+/** Liest den Binärrahmen; das JSON prüft der Aufrufer (`decodeTransfer`, `decodeBackup`). */
+export function decodeContainer(data: Uint8Array): DecodedContainer {
   const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
   let offset = 0;
 
@@ -134,15 +144,6 @@ export function decodeTransfer(data: Uint8Array): DecodedTransfer {
     throw new TransferFormatError("invalid json");
   }
 
-  // Neuere Version erkennen, bevor das Schema greift – eigener Hinweis statt „kaputt“
-  const version = (raw as { formatVersion?: unknown } | null)?.formatVersion;
-  if (typeof version === "number" && version > TRANSFER_FORMAT_VERSION) {
-    throw new TransferFormatError("newer format", "newerVersion");
-  }
-
-  const parsed = payloadSchema.safeParse(raw);
-  if (!parsed.success) throw new TransferFormatError("invalid payload");
-
   const images: TransferImages = new Map();
   const count = readU32();
   for (let index = 0; index < count; index++) {
@@ -151,5 +152,34 @@ export function decodeTransfer(data: Uint8Array): DecodedTransfer {
     images.set(fileName, Uint8Array.from(readBytes(readU32())));
   }
 
+  return { raw, images };
+}
+
+/** Art des Pakets (`type` im JSON), z. B. um eine geöffnete Datei zuzuordnen. */
+export function containerType(raw: unknown): string | null {
+  const type = (raw as { type?: unknown } | null)?.type;
+  return typeof type === "string" ? type : null;
+}
+
+/**
+ * Wirft `newerVersion`, wenn `formatVersion` neuer ist als `supported` – vor der Schema-Prüfung,
+ * damit statt „kaputt“ ein eigener Hinweis erscheint.
+ */
+export function assertFormatVersion(raw: unknown, supported: number) {
+  const version = (raw as { formatVersion?: unknown } | null)?.formatVersion;
+  if (typeof version === "number" && version > supported) {
+    throw new TransferFormatError("newer format", "newerVersion");
+  }
+}
+
+export function decodeTransfer(data: Uint8Array): DecodedTransfer {
+  return parseTransfer(decodeContainer(data));
+}
+
+/** Prüft ein gelesenes Paket als Liste (`type: "list"`). */
+export function parseTransfer({ raw, images }: DecodedContainer): DecodedTransfer {
+  assertFormatVersion(raw, TRANSFER_FORMAT_VERSION);
+  const parsed = payloadSchema.safeParse(raw);
+  if (!parsed.success) throw new TransferFormatError("invalid payload");
   return { payload: parsed.data, images };
 }

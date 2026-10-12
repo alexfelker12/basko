@@ -65,6 +65,17 @@ export function formatNumber(
   return format.format(value);
 }
 
+const dateFormat = new Intl.DateTimeFormat(intlLocale[locale], {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
+/** Datum im Format der aktiven Sprache, z. B. „28.09.2026“ (Sicherung, 8e). */
+export function formatDate(value: Date | number): string {
+  return dateFormat.format(value);
+}
+
 /** Alphabetische Sortierung der aktiven Sprache, ohne Beachtung der Groß-/Kleinschreibung. */
 export const collator = new Intl.Collator(intlLocale[locale], { sensitivity: "base", numeric: true });
 
