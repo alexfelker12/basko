@@ -4,6 +4,7 @@ import { PRODUCT_IMAGES_DIR } from "@/lib/images";
 import { getListItems } from "@/lib/queries/list-items";
 import { getListSummary } from "@/lib/queries/lists";
 import { getProductImages } from "@/lib/queries/products";
+import { getListRecipe } from "@/lib/queries/recipes";
 
 import {
   TRANSFER_FORMAT_VERSION,
@@ -16,8 +17,9 @@ export type ListTransfer = { payload: TransferPayload; images: TransferImages };
 
 /**
  * Paket einer Liste für Netzwerk-Transfer und Datei-Export: Name, Farbe und alle Einträge mit
- * Produkt, Menge, Einheit und Notiz; je Produkt Kategoriename und Fotos. Haken werden nicht
- * übertragen. Fehlende Fotodateien werden übersprungen.
+ * Produkt, Menge, Einheit und Notiz; je Produkt Kategoriename und Fotos; das Rezept, falls die
+ * Liste aus einem erstellt wurde. Haken werden nicht übertragen. Fehlende Fotodateien werden
+ * übersprungen.
  */
 export async function buildListTransfer(listId: string): Promise<ListTransfer | null> {
   const summary = getListSummary(listId);
@@ -48,12 +50,15 @@ export async function buildListTransfer(listId: string): Promise<ListTransfer | 
     });
   }
 
+  const recipe = getListRecipe(listId);
+
   return {
     payload: {
       formatVersion: TRANSFER_FORMAT_VERSION,
       type: "list",
       list: { name: summary.name, color: summary.color },
       items,
+      ...(recipe ? { recipe } : {}),
     },
     images,
   };
