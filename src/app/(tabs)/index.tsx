@@ -29,8 +29,14 @@ import type { ListFormValues } from "@/lib/validation";
 export default function ListsScreen() {
   const router = useRouter();
   const showToast = useAppToast();
-  /** Aus dem Transfer-Verlauf (6a): „···“-Menü dieser Liste öffnen. */
-  const { menu: menuParam } = useLocalSearchParams<{ menu?: string }>();
+  /**
+   * Aus dem Transfer-Verlauf (6a): „···“-Menü dieser Liste öffnen (`menu`).
+   * Aus den Rezepten (7e): Bearbeiten-Screen der neuen Liste öffnen (`edit`).
+   */
+  const { menu: menuParam, edit: editParam } = useLocalSearchParams<{
+    menu?: string;
+    edit?: string;
+  }>();
   const { data: lists = [], isPending } = useLists();
   const createList = useCreateList();
   const renameList = useRenameList();
@@ -64,6 +70,15 @@ export default function ListsScreen() {
   useEffect(() => {
     if (menuParam && menuParam === handledMenuParam) router.setParams({ menu: undefined });
   }, [menuParam, handledMenuParam, router]);
+
+  // Bearbeiten-Screen über der Übersicht: ‹ führt danach in die Listen-Übersicht
+  const handledEditParam = useRef<string | null>(null);
+  useEffect(() => {
+    if (!editParam || handledEditParam.current === editParam) return;
+    handledEditParam.current = editParam;
+    router.setParams({ edit: undefined });
+    router.push({ pathname: "/list/[id]/edit", params: { id: editParam } });
+  }, [editParam, router]);
 
   const deleteList = (list: ListSummary) =>
     deleteWithUndo({

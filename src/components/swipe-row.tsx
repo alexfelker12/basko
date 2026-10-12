@@ -15,8 +15,8 @@ import { StyledAnimatedView } from "@/components/ui/utils/animated";
 import { hapticTap } from "@/lib/haptics";
 import { cn } from "@gluestack-ui/utils/nativewind-utils";
 
-/** Breite der freigelegten Aktion: Löschen 96, Bearbeiten 112 (Komponenten → SwipeRow). */
-export const SWIPE_ACTION_WIDTH = { delete: 96, edit: 112 } as const;
+/** Breite der freigelegten Aktion: Löschen 96, Bearbeiten 112, Liste erstellen 120 (Komponenten → SwipeRow, 7c). */
+export const SWIPE_ACTION_WIDTH = { delete: 96, edit: 112, createList: 120 } as const;
 /** Ab diesem Anteil der Zeilenbreite gilt ein Wisch als „voll“ und löst sofort aus. */
 const FULL_SWIPE_RATIO = 0.55;
 const ANIMATION = { duration: 180 };

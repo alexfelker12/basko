@@ -8,7 +8,8 @@ import { Text } from "@/components/ui/text";
 import { t } from "@/lib/i18n";
 
 interface StackHeaderProps {
-  title: string;
+  /** Ohne Titel nur ‹ (Rezept-Details 7d: der Titel steht groß im Inhalt). */
+  title?: string;
   /** Aktionen rechts (runde Icon-Buttons). */
   children?: ReactNode;
 }
@@ -28,13 +29,17 @@ export function StackHeader({ title, children }: StackHeaderProps) {
         >
           <ButtonIcon as={ChevronLeftIcon} />
         </Button>
-        <Text
-          role="heading"
-          numberOfLines={1}
-          className="ml-1.5 flex-1 text-xl font-extrabold tracking-[-0.2px]"
-        >
-          {title}
-        </Text>
+        {title ? (
+          <Text
+            role="heading"
+            numberOfLines={1}
+            className="ml-1.5 flex-1 text-xl font-extrabold tracking-[-0.2px]"
+          >
+            {title}
+          </Text>
+        ) : (
+          <View className="flex-1" />
+        )}
         {children}
       </View>
     </View>
