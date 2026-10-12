@@ -107,22 +107,31 @@ function RecipeListModal({
   const bodyRef = useRef<ScrollView>(null);
   const footerRef = useRef<View>(null);
   const scrollY = useRef(0);
-  useEffect(() => {
-    const subscription = Keyboard.addListener("keyboardDidShow", () => {
-      const input = TextInput.State.currentlyFocusedInput();
-      const footer = footerRef.current;
-      if (!input || !footer) return;
-      footer.measureInWindow((_x, footerY) => {
-        input.measureInWindow((_ix, inputY, _width, inputHeight) => {
-          const overlap = inputY + inputHeight + FOCUSED_INPUT_MARGIN - footerY;
-          if (overlap > 0) {
-            bodyRef.current?.scrollTo({ y: scrollY.current + overlap, animated: true });
-          }
-        });
+  const scrollFocusedIntoView = () => {
+    const input = TextInput.State.currentlyFocusedInput();
+    const footer = footerRef.current;
+    if (!input || !footer) return;
+    footer.measureInWindow((_x, footerY) => {
+      input.measureInWindow((_ix, inputY, _width, inputHeight) => {
+        const overlap = inputY + inputHeight + FOCUSED_INPUT_MARGIN - footerY;
+        if (overlap > 0) {
+          bodyRef.current?.scrollTo({ y: scrollY.current + overlap, animated: true });
+        }
       });
     });
+  };
+  const scrollRef = useRef(scrollFocusedIntoView);
+  useEffect(() => {
+    scrollRef.current = scrollFocusedIntoView;
+  });
+  useEffect(() => {
+    const subscription = Keyboard.addListener("keyboardDidShow", () => scrollRef.current());
     return () => subscription.remove();
   }, []);
+  /** Wechsel in ein anderes Feld bei offener Tastatur: kein keyboardDidShow, selbst nachziehen. */
+  const onIngredientFocus = () => {
+    if (Keyboard.isVisible()) requestAnimationFrame(() => scrollRef.current());
+  };
 
   return (
     <Modal isOpen onClose={onClose} closeOnOverlayClick={false} size="lg">
@@ -178,7 +187,8 @@ function RecipeListModal({
                             maxLength={PRODUCT_NAME_MAX}
                             returnKeyType="done"
                             isDisabled={!selected}
-                            tapToFocus
+                            wrap
+                            onFocus={onIngredientFocus}
                           />
                         )}
                       </form.AppField>

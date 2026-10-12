@@ -1,14 +1,6 @@
-import { useState } from "react";
-import {
-  Pressable,
-  View,
-  type BlurEvent,
-  type FocusEvent,
-  type TextInputProps,
-} from "react-native";
+import type { BlurEvent, FocusEvent, TextInputProps } from "react-native";
 
 import { Input, InputField } from "@/components/ui/input";
-import { Text } from "@/components/ui/text";
 import { useSheetKeyboardHandlers } from "@/hooks/use-sheet-keyboard";
 import { useFieldContext } from "@/lib/form/form-context";
 
@@ -27,12 +19,10 @@ type TextFieldProps = Pick<
   size?: "default" | "sm";
   /** Ausgegraut und nicht bearbeitbar (z. B. abgewählte Zutat in 7e). */
   isDisabled?: boolean;
-  /**
-   * Für Felder in scrollenden Listen (7e): Ohne Fokus steht nur eine Anzeige im Feld-Look da, ein
-   * Tipp macht daraus das echte Feld. Sonst hält Android ein Feld mit langem Text fest, sobald es
-   * waagerecht scrollen kann – ein senkrechter Wisch darauf scrollte die Liste nicht.
-   */
-  tapToFocus?: boolean;
+  /** Text bricht um, das Feld wächst mit – für Felder in scrollenden Listen (7e), siehe `WRAP_PROPS`. */
+  wrap?: boolean;
+  /** Zusätzlich zur Tastatur-Anmeldung im Sheet, z. B. Feld in den sichtbaren Bereich scrollen. */
+  onFocus?: () => void;
   className?: string;
 };
 
@@ -41,62 +31,60 @@ export function TextFieldComponent({
   label,
   accessibilityLabel,
   onBlur,
-  size,
+  onFocus,
+  size = "default",
   isDisabled = false,
-  tapToFocus = false,
+  wrap = false,
   className,
   ...inputProps
 }: TextFieldProps) {
   const field = useFieldContext<string>();
   const sheetKeyboard = useSheetKeyboardHandlers();
   const error = fieldError(field.state.meta);
-  // tapToFocus: Erst ein Tipp macht aus der Anzeige ein echtes Feld (mit autoFocus), beim
-  // Verlassen wird es wieder zur Anzeige. Programmatisches focus() auf ein durch pointerEvents
-  // gesperrtes Feld verlor auf Android sofort den Fokus (er sprang ins erste Feld des Modals).
-  const [editing, setEditing] = useState(false);
-  const accessibleLabel = label ?? accessibilityLabel;
-
-  if (tapToFocus && !editing) {
-    return (
-      <FieldShell label={label} error={error} className={className}>
-        <Pressable
-          onPress={() => setEditing(true)}
-          disabled={isDisabled}
-          role="button"
-          aria-label={accessibleLabel}
-          aria-disabled={isDisabled}
-        >
-          <View pointerEvents="none">
-            <Input isInvalid={Boolean(error)} isDisabled={isDisabled} size={size}>
-              <Text numberOfLines={1} className="flex-1 text-base font-semibold text-ink">
-                {field.state.value}
-              </Text>
-            </Input>
-          </View>
-        </Pressable>
-      </FieldShell>
-    );
-  }
 
   return (
     <FieldShell label={label} error={error} className={className}>
-      <Input isInvalid={Boolean(error)} isDisabled={isDisabled} size={size}>
+      <Input
+        isInvalid={Boolean(error)}
+        isDisabled={isDisabled}
+        size={size}
+        className={wrap ? (size === "sm" ? "h-auto min-h-11" : "h-auto min-h-12") : undefined}
+      >
         <InputField
           {...inputProps}
-          autoFocus={tapToFocus || inputProps.autoFocus}
+          {...(wrap ? WRAP_PROPS : null)}
+          className={wrap ? (size === "sm" ? "h-auto py-2.5" : "h-auto py-3") : undefined}
           editable={!isDisabled}
           value={field.state.value}
-          onChangeText={field.handleChange}
-          onFocus={(event: FocusEvent) => sheetKeyboard?.onFocus(event)}
+          // Umbrechende Felder sind technisch mehrzeilig – Zeilenumbrüche (z. B. beim Einfügen)
+          // werden zu Leerzeichen, ein Name bleibt eine Zeile Text
+          onChangeText={(text: string) =>
+            field.handleChange(wrap ? text.replace(/\s*\n\s*/g, " ") : text)
+          }
+          onFocus={(event: FocusEvent) => {
+            sheetKeyboard?.onFocus(event);
+            onFocus?.();
+          }}
           onBlur={(event: BlurEvent) => {
             sheetKeyboard?.onBlur(event);
             field.handleBlur();
             onBlur?.();
-            setEditing(false);
           }}
-          aria-label={accessibleLabel}
+          aria-label={label ?? accessibilityLabel}
         />
       </Input>
     </FieldShell>
   );
 }
+
+/**
+ * `wrap`: Der Text bricht um, das Feld wächst mit und scrollt nie selbst. Android lässt die
+ * umgebende Liste nur dann eine Berührung übernehmen, wenn das Feld in keine Richtung scrollen
+ * kann – ein einzeiliges Feld mit langem Text konnte waagerecht scrollen und hielt jeden
+ * senkrechten Wisch fest (7e). Enter schließt das Feld statt eine neue Zeile anzufangen.
+ */
+const WRAP_PROPS = {
+  multiline: true,
+  scrollEnabled: false,
+  submitBehavior: "blurAndSubmit",
+} satisfies TextInputProps;
