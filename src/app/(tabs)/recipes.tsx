@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import {
   ChefHatIcon,
   CloudOffIcon,
@@ -40,6 +40,19 @@ export default function RecipesScreen() {
   const [creating, setCreating] = useState<Recipe | SavedRecipe | null>(null);
   const search = useRecipeSearch(query);
   const { data: saved = [] } = useSavedRecipes();
+
+  // Wer den Tab verlässt (anderer Tab, Liste nach „Erstellen“ …), findet beim Zurückkommen wieder
+  // die gespeicherten Rezepte vor. Nur die Details (7d) behalten die Suche – von dort geht ‹ zurück.
+  const pathname = usePathname();
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
+    if (pathname !== "/recipes" && !pathname.startsWith("/recipe/")) {
+      setInput("");
+      setQuery("");
+      setCreating(null);
+    }
+  }
 
   const submit = () => setQuery(input.trim());
   const clear = () => {
