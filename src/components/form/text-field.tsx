@@ -1,4 +1,12 @@
-import type { BlurEvent, TextInputProps } from "react-native";
+import { useRef, useState } from "react";
+import {
+  Pressable,
+  View,
+  type BlurEvent,
+  type FocusEvent,
+  type TextInput,
+  type TextInputProps,
+} from "react-native";
 
 import { Input, InputField } from "@/components/ui/input";
 import { useSheetKeyboardHandlers } from "@/hooks/use-sheet-keyboard";
@@ -17,6 +25,14 @@ type TextFieldProps = Pick<
   onBlur?: () => void;
   /** Höhe: default 48, sm 44 (Inline-Umbenennen). */
   size?: "default" | "sm";
+  /** Ausgegraut und nicht bearbeitbar (z. B. abgewählte Zutat in 7e). */
+  isDisabled?: boolean;
+  /**
+   * Für Felder in scrollenden Listen (7e): Das Feld nimmt Berührungen erst an, wenn es den Fokus
+   * hat; vorher fokussiert ein Tipp es. Sonst hält Android ein Feld mit langem Text fest, sobald
+   * es waagerecht scrollen kann – ein senkrechter Wisch darauf scrollte die Liste nicht.
+   */
+  tapToFocus?: boolean;
   className?: string;
 };
 
@@ -26,29 +42,54 @@ export function TextFieldComponent({
   accessibilityLabel,
   onBlur,
   size,
+  isDisabled = false,
+  tapToFocus = false,
   className,
   ...inputProps
 }: TextFieldProps) {
   const field = useFieldContext<string>();
   const sheetKeyboard = useSheetKeyboardHandlers();
   const error = fieldError(field.state.meta);
+  const inputRef = useRef<TextInput>(null);
+  const [focused, setFocused] = useState(false);
+
+  const input = (
+    <Input isInvalid={Boolean(error)} isDisabled={isDisabled} size={size}>
+      <InputField
+        {...inputProps}
+        // Die Ref-Typen von InputField (gluestack) zeigen auf die Props statt auf das TextInput
+        ref={inputRef as never}
+        editable={!isDisabled}
+        value={field.state.value}
+        onChangeText={field.handleChange}
+        onFocus={(event: FocusEvent) => {
+          setFocused(true);
+          sheetKeyboard?.onFocus(event);
+        }}
+        onBlur={(event: BlurEvent) => {
+          setFocused(false);
+          sheetKeyboard?.onBlur(event);
+          field.handleBlur();
+          onBlur?.();
+        }}
+        aria-label={label ?? accessibilityLabel}
+      />
+    </Input>
+  );
 
   return (
     <FieldShell label={label} error={error} className={className}>
-      <Input isInvalid={Boolean(error)} size={size}>
-        <InputField
-          {...inputProps}
-          value={field.state.value}
-          onChangeText={field.handleChange}
-          onFocus={sheetKeyboard?.onFocus}
-          onBlur={(event: BlurEvent) => {
-            sheetKeyboard?.onBlur(event);
-            field.handleBlur();
-            onBlur?.();
-          }}
-          aria-label={label ?? accessibilityLabel}
-        />
-      </Input>
+      {tapToFocus ? (
+        <Pressable
+          onPress={() => inputRef.current?.focus()}
+          disabled={isDisabled || focused}
+          accessible={false}
+        >
+          <View pointerEvents={focused ? "auto" : "none"}>{input}</View>
+        </Pressable>
+      ) : (
+        input
+      )}
     </FieldShell>
   );
 }

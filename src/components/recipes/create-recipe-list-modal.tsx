@@ -151,7 +151,11 @@ function RecipeListModal({
         >
           {entries.map((entry, index) => (
             <View key={entry.key} className="flex-row gap-1.5 border-b border-line py-3">
-              <form.AppField name={`ingredients[${index}].selected`}>
+              <form.AppField
+                name={`ingredients[${index}].selected`}
+                // Abgewählt = nicht bearbeitbar; ein offenes Namensfeld schließt mit der Tastatur
+                listeners={{ onChange: ({ value }) => !value && Keyboard.dismiss() }}
+              >
                 {(field) => (
                   <field.CheckboxField
                     label={t("recipeList.select", { name: entry.name })}
@@ -165,7 +169,7 @@ function RecipeListModal({
                   const selected = ingredient?.selected ?? true;
                   const name = normalizeName(ingredient?.name ?? "");
                   return (
-                    <View className={cn("min-w-0 flex-1 gap-1.5", !selected && "opacity-45")}>
+                    <View className="min-w-0 flex-1 gap-1.5">
                       <form.AppField name={`ingredients[${index}].name`}>
                         {(field) => (
                           <field.TextField
@@ -173,10 +177,17 @@ function RecipeListModal({
                             accessibilityLabel={t("recipeList.ingredientName")}
                             maxLength={PRODUCT_NAME_MAX}
                             returnKeyType="done"
+                            isDisabled={!selected}
+                            tapToFocus
                           />
                         )}
                       </form.AppField>
-                      <View className="flex-row flex-wrap items-center gap-2">
+                      <View
+                        className={cn(
+                          "flex-row flex-wrap items-center gap-2",
+                          !selected && "opacity-45"
+                        )}
+                      >
                         {entry.originals.length > 0 ? (
                           <Text className="text-xs text-soft">{entry.originals.join(" + ")}</Text>
                         ) : null}
