@@ -5,6 +5,10 @@
 
 /* ─── Basko design tokens ──────────────────────────────────────────
    Werte: Spezifikation „Grundlagen → Farb-Tokens“ (hell / dunkel).
+   Farben stehen als RGB-Tripel ohne rgb() („246 244 238“) und werden unten als
+   rgb(var(--…)) eingebunden: Nur so löst NativeWind Deckkraft-Modifier wie bg-black/50
+   oder text-primary-ink/85 zur Laufzeit auf. Mit Hex-Werten bzw. Konstanten rechnet der
+   Compiler color-mix() schon beim Bauen aus – bei Schwarz kam dabei „#NaNNaNNaN80“ heraus.
    1. :root                    — hell (alle Plattformen)
    2. @media dark :root        — dunkel; NativeWind koppelt das nativ an
                                  Appearance (gesetzt aus settings.theme).
@@ -13,64 +17,72 @@
    (bg-bg, text-ink, border-line, bg-chip, text-primary …), keine Hex-Werte. */
 @layer theme {
   :root {
-    --bg: #F6F4EE;
-    --surface: #FFFFFF;
-    --ink: #22261E;
-    --soft: #6B6F63;
-    --line: #E3E0D6;
-    --chip: #EDEAE0;
-    --primary: #3E5C46;
-    --primary-ink: #EFF3EC;
+    /* Weiß/Schwarz und die festen Farben sind in hell und dunkel gleich. Sie stehen trotzdem in
+       beiden Blöcken: Eine Variable ohne Varianten setzt der Compiler als Konstante ein – dann
+       rechnet er bg-black/50 statisch und falsch („#NaNNaNNaN80“). */
+    --white: 255 255 255;
+    --black: 0 0 0;
+    --amber: 201 138 43;
+    --danger: 180 82 59;
+    --list-blue: 62 107 138;
+    --list-purple: 122 92 163;
+
+    --bg: 246 244 238;
+    --surface: 255 255 255;
+    --ink: 34 38 30;
+    --soft: 107 111 99;
+    --line: 227 224 214;
+    --chip: 237 234 224;
+    --primary: 62 92 70;
+    --primary-ink: 239 243 236;
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1B1E19;
-      --surface: #242822;
-      --ink: #EDEFE8;
-      --soft: #9CA192;
-      --line: #333A2F;
-      --chip: #2E332A;
-      --primary: #8FBB9B;
-      --primary-ink: #16201A;
+      --white: 255 255 255;
+      --black: 0 0 0;
+      --amber: 201 138 43;
+      --danger: 180 82 59;
+      --list-blue: 62 107 138;
+      --list-purple: 122 92 163;
+
+      --bg: 27 30 25;
+      --surface: 36 40 34;
+      --ink: 237 239 232;
+      --soft: 156 161 146;
+      --line: 51 58 47;
+      --chip: 46 51 42;
+      --primary: 143 187 155;
+      --primary-ink: 22 32 26;
     }
   }
 
   :root.dark {
-    --bg: #1B1E19;
-    --surface: #242822;
-    --ink: #EDEFE8;
-    --soft: #9CA192;
-    --line: #333A2F;
-    --chip: #2E332A;
-    --primary: #8FBB9B;
-    --primary-ink: #16201A;
+    --bg: 27 30 25;
+    --surface: 36 40 34;
+    --ink: 237 239 232;
+    --soft: 156 161 146;
+    --line: 51 58 47;
+    --chip: 46 51 42;
+    --primary: 143 187 155;
+    --primary-ink: 22 32 26;
   }
 
   :root.light {
-    --bg: #F6F4EE;
-    --surface: #FFFFFF;
-    --ink: #22261E;
-    --soft: #6B6F63;
-    --line: #E3E0D6;
-    --chip: #EDEAE0;
-    --primary: #3E5C46;
-    --primary-ink: #EFF3EC;
+    --bg: 246 244 238;
+    --surface: 255 255 255;
+    --ink: 34 38 30;
+    --soft: 107 111 99;
+    --line: 227 224 214;
+    --chip: 237 234 224;
+    --primary: 62 92 70;
+    --primary-ink: 239 243 236;
   }
 }
 
 @theme {
   /* Nur unsere Farben: die Tailwind-Farbskalen werden entfernt. */
   --color-*: initial;
-  --color-white: #FFFFFF;
-  --color-black: #000000;
-
-  /* In hell und dunkel identisch */
-  --color-amber: #C98A2B;
-  --color-danger: #B4523B;
-  /* Listenfarben Blau / Lila – zentral definiert (Spezifikation 9/10) */
-  --color-list-blue: #3E6B8A;
-  --color-list-purple: #7A5CA3;
 
   /* Maße: Radius 14 (Karten, Sheets, Eingaben), 10 (Vorschaubilder), 999 = rounded-[999px] */
   --radius-card: 14px;
@@ -83,14 +95,23 @@
 }
 
 @theme inline {
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-ink: var(--ink);
-  --color-soft: var(--soft);
-  --color-line: var(--line);
-  --color-chip: var(--chip);
-  --color-primary: var(--primary);
-  --color-primary-ink: var(--primary-ink);
+  --color-white: rgb(var(--white));
+  --color-black: rgb(var(--black));
+  /* In hell und dunkel identisch */
+  --color-amber: rgb(var(--amber));
+  --color-danger: rgb(var(--danger));
+  /* Listenfarben Blau / Lila – zentral definiert (Spezifikation 9/10) */
+  --color-list-blue: rgb(var(--list-blue));
+  --color-list-purple: rgb(var(--list-purple));
+
+  --color-bg: rgb(var(--bg));
+  --color-surface: rgb(var(--surface));
+  --color-ink: rgb(var(--ink));
+  --color-soft: rgb(var(--soft));
+  --color-line: rgb(var(--line));
+  --color-chip: rgb(var(--chip));
+  --color-primary: rgb(var(--primary));
+  --color-primary-ink: rgb(var(--primary-ink));
 }
 
 /* nativewind/theme setzt --font-sans pro Plattform auf die Systemschrift.

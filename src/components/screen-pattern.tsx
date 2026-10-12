@@ -69,12 +69,27 @@ function dotPaths(width: number, height: number): string[] {
   return result;
 }
 
+/**
+ * Farbvariablen stehen als RGB-Tripel in `global.css` („227 224 214“); nativ kommt der Wert als
+ * Zahlen-Array an. Daraus wird eine Farbe für react-native-svg.
+ */
+function cssColor(value: unknown): string | null {
+  const channels: unknown[] = Array.isArray(value)
+    ? value.flat()
+    : typeof value === "string"
+      ? value.trim().split(/[\s,]+/)
+      : [];
+  const numbers = channels.map(Number);
+  if (numbers.length !== 3 || numbers.some((n) => !Number.isFinite(n))) return null;
+  return `rgb(${numbers.join(", ")})`;
+}
+
 /** Muster liegt hinter dem Inhalt und fängt keine Berührungen ab. */
 export const ScreenPattern = memo(function ScreenPattern() {
   const window = useWindowDimensions();
   // Kein `currentColor`: react-native-svg kann das auf Android nicht überall auflösen
-  const color = useNativeVariable("--line");
-  if (typeof color !== "string") return null;
+  const color = cssColor(useNativeVariable("--line"));
+  if (!color) return null;
 
   const width = Math.ceil(window.width / SIZE_STEP) * SIZE_STEP;
   const height = Math.ceil(window.height / SIZE_STEP) * SIZE_STEP;
