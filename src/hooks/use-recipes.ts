@@ -1,8 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { localQuery } from "@/lib/query-client";
 import { queryKeys } from "@/lib/query-keys";
-import { createRecipeList, type RecipeListItem } from "@/lib/queries/recipes";
-import { normalizeRecipeQuery, searchRecipes } from "@/lib/recipes/api";
+import {
+  createRecipeList,
+  getSavedRecipe,
+  getSavedRecipes,
+  type RecipeListItem,
+} from "@/lib/queries/recipes";
+import { normalizeRecipeQuery, searchRecipes, type Recipe } from "@/lib/recipes/api";
 
 /**
  * Rezeptsuche (7b): erst beim Bestätigen (leerer Begriff = keine Anfrage). Die Treffer bleiben pro
@@ -21,12 +27,32 @@ export function useRecipeSearch(query: string) {
   });
 }
 
-/** Einkaufsliste aus einem Rezept anlegen (7e); liefert die ID der neuen Liste. */
+/** Gespeicherte Rezepte (7a): Rezepte mit mindestens einer sichtbaren Liste. */
+export function useSavedRecipes() {
+  return useQuery(localQuery(queryKeys.savedRecipes, getSavedRecipes));
+}
+
+/** Ein gespeichertes Rezept für die Details (7d) – ohne API-Aufruf. */
+export function useSavedRecipe(id: string) {
+  return useQuery(localQuery(queryKeys.savedRecipe(id), () => getSavedRecipe(id)));
+}
+
+/**
+ * Einkaufsliste aus einem Rezept anlegen (7e); das Rezept wird mitgespeichert (bzw. ein schon
+ * gespeichertes wiederverwendet). Liefert die ID der neuen Liste.
+ */
 export function useCreateRecipeList() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ name, items }: { name: string; items: RecipeListItem[] }) =>
-      createRecipeList(name, items),
+    mutationFn: async ({
+      name,
+      items,
+      recipe,
+    }: {
+      name: string;
+      items: RecipeListItem[];
+      recipe: Recipe & { id?: string };
+    }) => createRecipeList(name, items, recipe),
     onSettled: () => {
       // Neue Liste und ggf. neue Produkte in „Sonstiges“
       queryClient.invalidateQueries({ queryKey: queryKeys.lists });
