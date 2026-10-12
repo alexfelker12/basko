@@ -1,6 +1,7 @@
 import { createFormHook } from "@tanstack/react-form";
 
 import { CategoryFieldComponent } from "@/components/form/category-field";
+import { CheckboxFieldComponent } from "@/components/form/checkbox-field";
 import { ColorFieldComponent } from "@/components/form/color-field";
 import { PhotosFieldComponent } from "@/components/form/photos-field";
 import { QuantityFieldComponent } from "@/components/form/quantity-field";
@@ -21,6 +22,7 @@ export const { useAppForm, withForm, withFieldGroup } = createFormHook({
     UnitField: UnitFieldComponent,
     ColorField: ColorFieldComponent,
     CategoryField: CategoryFieldComponent,
+    CheckboxField: CheckboxFieldComponent,
     PhotosField: PhotosFieldComponent,
   },
   formComponents: { SubmitButton },

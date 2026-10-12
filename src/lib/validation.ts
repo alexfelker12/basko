@@ -58,3 +58,21 @@ export const categoryFormSchema = z.object({
 });
 
 export type CategoryFormValues = z.input<typeof categoryFormSchema>;
+
+/**
+ * Einkaufsliste aus einem Rezept (7e): Listenname nicht leer (Namensregel „(n)“ beim Anlegen),
+ * je Zutat Auswahl und bearbeitbarer Name (max. 100). Zeilen ohne Namen werden übergangen;
+ * „Erstellen“ braucht mindestens eine gewählte Zutat mit Namen (prüft das Formular).
+ */
+export const recipeListFormSchema = z.object({
+  name: z.string().trim().min(1, ""),
+  ingredients: z.array(
+    z.object({
+      key: z.string(),
+      selected: z.boolean(),
+      name: z.string().max(PRODUCT_NAME_MAX),
+    })
+  ),
+});
+
+export type RecipeListFormValues = z.input<typeof recipeListFormSchema>;

@@ -12,4 +12,6 @@ export const queryKeys = {
   productListCount: (id: string) => ["products", "list-count", id] as const,
   categories: ["products", "categories"] as const,
   transferHistory: ["transfer-history"] as const,
+  /** Rezeptsuche (7b): Ergebnisse pro Suchbegriff, bleiben für die Sitzung im Cache. */
+  recipeSearch: (query: string) => ["recipes", query] as const,
 };
