@@ -7,6 +7,7 @@ import {
   PRODUCT_NAME_MAX,
 } from "@/lib/db/schema";
 import { LIST_COLORS } from "@/lib/list-colors";
+import { DEVICE_NAME_MAX } from "@/lib/settings";
 import { roundQuantity, UNITS } from "@/lib/units";
 
 /*
@@ -58,6 +59,13 @@ export const categoryFormSchema = z.object({
 });
 
 export type CategoryFormValues = z.input<typeof categoryFormSchema>;
+
+/** Gerätename (8b): nicht leer, max. 30 Zeichen. Leer graut nur „Speichern“ aus, ohne Meldung. */
+export const deviceNameFormSchema = z.object({
+  name: z.string().trim().min(1, "").max(DEVICE_NAME_MAX),
+});
+
+export type DeviceNameFormValues = z.input<typeof deviceNameFormSchema>;
 
 /**
  * Einkaufsliste aus einem Rezept (7e): Listenname nicht leer (Namensregel „(n)“ beim Anlegen),
