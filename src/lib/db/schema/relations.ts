@@ -4,9 +4,15 @@ import { category } from "./category";
 import { list } from "./list";
 import { listItem } from "./list-item";
 import { product, productImage } from "./product";
+import { recipe } from "./recipe";
 
-export const listRelations = relations(list, ({ many }) => ({
+export const listRelations = relations(list, ({ one, many }) => ({
   items: many(listItem),
+  recipe: one(recipe, { fields: [list.recipeId], references: [recipe.id] }),
+}));
+
+export const recipeRelations = relations(recipe, ({ many }) => ({
+  lists: many(list),
 }));
 
 export const categoryRelations = relations(category, ({ many }) => ({

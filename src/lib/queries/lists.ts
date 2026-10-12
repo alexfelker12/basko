@@ -1,6 +1,7 @@
 import { and, count, desc, eq, isNotNull, isNull, ne } from "drizzle-orm";
 
 import { db } from "@/lib/db";
+import { deleteOrphanRecipes } from "@/lib/db/purge";
 import { newId } from "@/lib/db/id";
 import { list, listItem } from "@/lib/db/schema";
 import { t } from "@/lib/i18n";
@@ -56,8 +57,8 @@ function takenListNames(excludeId?: string): string[] {
     .map((row) => row.name);
 }
 
-/** Neue Liste (1f); Name nach Namensregel. Liefert die ID. */
-export function createList(name: string, color: ListColor): string {
+/** Neue Liste (1f, 7e); Name nach Namensregel, optional mit Rezept. Liefert die ID. */
+export function createList(name: string, color: ListColor, recipeId: string | null = null): string {
   const id = newId();
   const now = new Date();
   db.insert(list)
@@ -67,6 +68,7 @@ export function createList(name: string, color: ListColor): string {
       color,
       createdAt: now,
       lastUsedAt: now,
+      recipeId,
     })
     .run();
   return id;
@@ -90,7 +92,7 @@ export function touchList(id: string) {
 }
 
 /**
- * Duplizieren (1e): „Kopie von {Name}“ nach Namensregel, gleiche Farbe,
+ * Duplizieren (1e): „Kopie von {Name}“ nach Namensregel, gleiche Farbe, gleiches Rezept,
  * alle Einträge mit zurückgesetzten Haken. Liefert die ID der Kopie.
  */
 export function duplicateList(id: string): string | null {
@@ -107,6 +109,7 @@ export function duplicateList(id: string): string | null {
         color: source.color,
         createdAt: now,
         lastUsedAt: now,
+        recipeId: source.recipeId,
       })
       .run();
 
@@ -145,7 +148,8 @@ export function restoreList(id: string) {
   db.update(list).set({ deletedAt: null }).where(eq(list.id, id)).run();
 }
 
-/** … nach 5 s endgültig löschen (Einträge per Cascade). */
+/** … nach 5 s endgültig löschen (Einträge per Cascade, Rezept ohne weitere Liste mit). */
 export function purgeList(id: string) {
   db.delete(list).where(and(eq(list.id, id), isNotNull(list.deletedAt))).run();
+  deleteOrphanRecipes(db);
 }

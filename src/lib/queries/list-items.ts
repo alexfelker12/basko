@@ -75,7 +75,7 @@ export function addListItem(listId: string, productId: string, values: ItemValue
 }
 
 /** Eintrag anlegen, ohne eigene Transaktion. */
-function insertListItem(listId: string, productId: string, values: ItemValues): string {
+export function insertListItem(listId: string, productId: string, values: ItemValues): string {
   // Ein noch auf Rückgängig wartender Eintrag desselben Produkts wird sofort endgültig gelöscht,
   // sonst kollidiert er mit dem neuen (ein Produkt steht höchstens einmal in einer Liste).
   db.delete(listItem)

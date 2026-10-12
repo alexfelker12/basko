@@ -2,7 +2,7 @@
 import { createModal } from '@gluestack-ui/core/modal/creator';
 import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils';
 import { tva, useStyleContext, withStyleContext } from '@gluestack-ui/utils/nativewind-utils';
-import { StyledAnimatedPressable, StyledAnimatedView } from '../utils/animated';
+import { StyledAnimatedView } from '../utils/animated';
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import {
@@ -16,7 +16,10 @@ const SCOPE = 'MODAL';
 
 const UIModal = createModal({
   Root: withStyleContext(View as any, SCOPE),
-  Backdrop: StyledAnimatedPressable,
+  // Basko: Der Backdrop ist ein normales Pressable (Tippfläche), die Abdunklung liegt als
+  // animierte Ebene darin (siehe ModalBackdrop) – mit dem animierten Pressable war auf dem Gerät
+  // keine Abdunklung zu sehen.
+  Backdrop: Pressable,
   Content: StyledAnimatedView,
   Body: ScrollView,
   CloseButton: Pressable,
@@ -39,7 +42,7 @@ const modalStyle = tva({
 });
 
 const modalBackdropStyle = tva({
-  base: 'absolute left-0 top-0 right-0 bottom-0 bg-black/50 web:cursor-default',
+  base: 'absolute left-0 top-0 right-0 bottom-0 web:cursor-default',
 });
 
 const modalContentStyle = tva({
@@ -111,13 +114,18 @@ const ModalBackdrop = React.forwardRef<
   return (
     <UIModal.Backdrop
       ref={ref}
-      entering={FadeIn.duration(200).easing(Easing.linear)}
-      exiting={FadeOut.duration(200).easing(Easing.linear)}
       {...props}
       className={modalBackdropStyle({
         class: className,
       })}
-    />
+    >
+      <StyledAnimatedView
+        entering={FadeIn.duration(200).easing(Easing.linear)}
+        exiting={FadeOut.duration(200).easing(Easing.linear)}
+        pointerEvents="none"
+        className="flex-1 bg-black/50"
+      />
+    </UIModal.Backdrop>
   );
 });
 

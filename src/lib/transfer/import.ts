@@ -14,6 +14,7 @@ import {
 import { deleteProductImageFiles, PRODUCT_IMAGES_DIR } from "@/lib/images";
 import { normalizeName } from "@/lib/names";
 import { createList } from "@/lib/queries/lists";
+import { findOrCreateRecipe } from "@/lib/queries/recipes";
 import { getProductImages } from "@/lib/queries/products";
 import { addTransferHistory } from "@/lib/queries/transfer-history";
 import type { Unit } from "@/lib/units";
@@ -27,6 +28,7 @@ import type { DecodedTransfer, TransferItem } from "./format";
  * - Konflikt = Produkt existiert, hat aber eine andere Kategorie oder andere Fotos (MD5).
  *   „Überschreiben“ ersetzt Kategorie und Fotos, „Behalten“ verwirft beides.
  * - Die Liste bekommt die Namensregel „(n)“, alle Einträge kommen offen an.
+ * - Ein mitgeschicktes Rezept wird gespeichert (bzw. ein inhaltsgleiches wiederverwendet).
  */
 
 export type ConflictResolution = "keep" | "overwrite";
@@ -261,7 +263,8 @@ export function saveImport(
         }
       }
 
-      const listId = createList(payload.list.name, payload.list.color);
+      const recipeId = payload.recipe ? findOrCreateRecipe(payload.recipe) : null;
+      const listId = createList(payload.list.name, payload.list.color, recipeId);
       const listName = getCreatedListName(listId);
       if (plans.length > 0) {
         db.insert(listItem)

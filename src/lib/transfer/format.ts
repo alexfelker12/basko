@@ -31,6 +31,33 @@ const itemSchema = z.object({
   note: z.string().max(LIST_ITEM_NOTE_MAX).nullable(),
 });
 
+const nutritionValue = z.number().nullable();
+
+/**
+ * Rezept einer Liste aus 7e (seit Phase 5, optional): Ältere App-Stände ignorieren das Feld
+ * (Zod entfernt unbekannte Schlüssel), daher bleibt `formatVersion` 1.
+ */
+const recipeSchema = z.object({
+  title: z.string().trim().min(1).max(500),
+  servings: z.string().max(200).nullable(),
+  ingredients: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(500),
+        quantity: z.number().nullable(),
+        unit: z.string().max(100).nullable(),
+      })
+    )
+    .max(500),
+  instructions: z.array(z.string().max(10_000)).max(500),
+  nutrition: z.object({
+    calories: nutritionValue,
+    protein: nutritionValue,
+    carbs: nutritionValue,
+    fat: nutritionValue,
+  }),
+});
+
 const payloadSchema = z.object({
   formatVersion: z.literal(TRANSFER_FORMAT_VERSION),
   type: z.literal("list"),
@@ -39,6 +66,7 @@ const payloadSchema = z.object({
     color: z.enum(LIST_COLORS),
   }),
   items: z.array(itemSchema),
+  recipe: recipeSchema.optional(),
 });
 
 export type TransferPayload = z.infer<typeof payloadSchema>;

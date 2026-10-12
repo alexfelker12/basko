@@ -91,6 +91,7 @@ export function ItemForm({
             placeholder={t("itemSheet.notePlaceholder")}
             maxLength={LIST_ITEM_NOTE_MAX}
             returnKeyType="done"
+            maxLines={3}
           />
         )}
       </form.AppField>
