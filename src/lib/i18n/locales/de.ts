@@ -310,6 +310,7 @@ const de = {
     title: "Rezepte",
     searchPlaceholder: "Rezept suchen …",
     clearSearch: "Suche leeren",
+    saved: "Gespeicherte Rezepte",
     createList: "Liste erstellen",
     showRecipe: "{title} anzeigen",
     empty: {

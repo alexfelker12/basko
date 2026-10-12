@@ -25,8 +25,8 @@ import { recipeListFormSchema, type RecipeListFormValues } from "@/lib/validatio
 import { cn } from "@gluestack-ui/utils/nativewind-utils";
 
 interface CreateRecipeListModalProps {
-  /** Offen, solange ein Rezept gesetzt ist. */
-  recipe: Recipe | null;
+  /** Offen, solange ein Rezept gesetzt ist. Ein gespeichertes (mit `id`) wird wiederverwendet. */
+  recipe: (Recipe & { id?: string }) | null;
   onClose: () => void;
   /** Nach dem Anlegen, mit der ID der neuen Liste. */
   onCreated: (listId: string) => void;
@@ -51,7 +51,7 @@ function RecipeListModal({
   recipe,
   onClose,
   onCreated,
-}: CreateRecipeListModalProps & { recipe: Recipe }) {
+}: CreateRecipeListModalProps & { recipe: Recipe & { id?: string } }) {
   const showToast = useAppToast();
   const createList = useCreateRecipeList();
   const { data: catalog = [] } = useCatalog();
@@ -84,6 +84,7 @@ function RecipeListModal({
       createList.mutate(
         {
           name: value.name,
+          recipe,
           items: chosen.map((entry) => ({
             name: entry.name,
             amount: entry.amount,
