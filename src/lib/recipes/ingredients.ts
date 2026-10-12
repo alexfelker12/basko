@@ -10,7 +10,7 @@ export type Amount = { quantity: number; unit: Unit };
 /** Eine Zutat, wie sie in „Einkaufsliste erstellen“ (7e) steht – doppelte schon zusammengefasst. */
 export type RecipeListEntry = {
   key: string;
-  /** Produktname: Teil vor „;“ („Onion; chopped“ → „Onion“), max. 100 Zeichen. */
+  /** Produktname: Teil vor „;“ bzw. „,“ („Onion; chopped“, „Onion, chopped“ → „Onion“), max. 100 Zeichen. */
   name: string;
   /** Originalangaben wie geliefert („2 tablespoon“); kommen in die Notiz des Eintrags. */
   originals: string[];
@@ -127,9 +127,12 @@ export function formatOriginalAmount({ quantity, unit }: RecipeIngredient): stri
   return [value === null ? "" : formatRecipeNumber(value), unitText].filter(Boolean).join(" ");
 }
 
-/** Produktname aus dem Zutatennamen: Teil vor „;“, max. 100 Zeichen. */
+/**
+ * Produktname aus dem Zutatennamen: Teil vor dem ersten „;“ oder „,“ – dahinter steht die
+ * Zubereitung („Garlic cloves; finely grated“, „Chicken thighs, boneless“). Max. 100 Zeichen.
+ */
 export function ingredientProductName(name: string): string {
-  const base = name.split(";")[0].trim() || name.trim();
+  const base = name.split(/[;,]/)[0].trim() || name.trim();
   return base.slice(0, PRODUCT_NAME_MAX).trim();
 }
 
