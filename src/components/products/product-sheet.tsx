@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View } from "react-native";
 
+import { CategoryFieldComponent } from "@/components/form/category-field";
 import { Sheet } from "@/components/sheet";
 import { Text } from "@/components/ui/text";
 import { useCatalog, useCreateProduct, useUpdateProduct } from "@/hooks/use-catalog";
@@ -123,7 +124,8 @@ function ProductForm({ state, onClose, onCreated }: ProductFormProps) {
         )}
       </form.AppField>
 
-      <form.AppField name="categoryId">{(field) => <field.CategoryField />}</form.AppField>
+      {/* Direkt statt `field.CategoryField` – siehe `src/lib/form` (Require-Zyklus) */}
+      <form.AppField name="categoryId">{() => <CategoryFieldComponent />}</form.AppField>
 
       <form.Subscribe selector={(formState) => formState.values.name}>
         {(name) => (
