@@ -1,16 +1,63 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as DocumentPicker from "expo-document-picker";
+import { Platform } from "react-native";
 
-import { settingsQueryKey } from "@/hooks/use-settings";
-import { exportBackupFile } from "@/lib/backup/create";
+import { settingsQueryKey, useSettings, useUpdateSetting } from "@/hooks/use-settings";
+import {
+  backupFolderName,
+  pickBackupDirectory,
+  saveBackupFile,
+  shareBackupFile,
+  usableBackupDirectory,
+} from "@/lib/backup/create";
 import type { DecodedBackup } from "@/lib/backup/format";
 import { readBackupFile, restoreBackup } from "@/lib/backup/restore";
 import { openRestore } from "@/lib/backup/session";
 import type { Settings } from "@/lib/settings";
 
-/** „Sichern“ (8c): Datei bauen und teilen; fertig, sobald das Teilen-Menü zu ist (8d). */
+export type BackupExportResult =
+  { kind: "saved"; folder: string | null } | { kind: "shared" } | { kind: "cancelled" };
+
+/**
+ * „Sichern“ (8c). Android: direkt in den gemerkten Ordner; gibt es keinen (oder ist er weg), erst
+ * die Ordnerauswahl – abbrechen = `cancelled`. iOS: Teilen-Menü („In Dateien sichern“), fertig,
+ * sobald es zu ist. Danach der Toast (8d).
+ */
 export function useExportBackup() {
-  return useMutation({ mutationFn: exportBackupFile });
+  const { backupDirectory } = useSettings();
+  const updateSetting = useUpdateSetting();
+
+  return useMutation({
+    mutationFn: async (): Promise<BackupExportResult> => {
+      if (Platform.OS !== "android") {
+        await shareBackupFile();
+        return { kind: "shared" };
+      }
+      let directory = usableBackupDirectory(backupDirectory);
+      if (!directory) {
+        directory = await pickBackupDirectory(backupDirectory);
+        if (!directory) return { kind: "cancelled" };
+        await updateSetting.mutateAsync({ key: "backupDirectory", value: directory.uri });
+      }
+      await saveBackupFile(directory);
+      return { kind: "saved", folder: backupFolderName(directory.uri) };
+    },
+  });
+}
+
+/** „Speicherort“ (8c, nur Android): anderen Ordner für die Sicherungen wählen. */
+export function useChooseBackupDirectory() {
+  const { backupDirectory } = useSettings();
+  const updateSetting = useUpdateSetting();
+
+  return useMutation({
+    mutationFn: async (): Promise<boolean> => {
+      const directory = await pickBackupDirectory(backupDirectory);
+      if (!directory) return false;
+      await updateSetting.mutateAsync({ key: "backupDirectory", value: directory.uri });
+      return true;
+    },
+  });
 }
 
 /**
