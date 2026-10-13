@@ -42,6 +42,8 @@ export async function buildListTransfer(listId: string): Promise<ListTransfer | 
       product: {
         name: item.productName,
         category: item.categoryIsSystem ? null : item.categoryName,
+        // Standard-Kategorie: Der Empfänger findet sie über den Schlüssel auch in einer anderen Sprache
+        ...(item.categoryKey && !item.categoryIsSystem ? { categoryKey: item.categoryKey } : {}),
         images: refs,
       },
       quantity: item.quantity,

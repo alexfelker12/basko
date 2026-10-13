@@ -12,6 +12,7 @@ import {
   type TransferDirection,
 } from "@/lib/db/schema";
 import { deleteProductImageFiles, PRODUCT_IMAGES_DIR } from "@/lib/images";
+import { categoryLabel } from "@/lib/category-name";
 import { normalizeName } from "@/lib/names";
 import { createList } from "@/lib/queries/lists";
 import { findOrCreateRecipe } from "@/lib/queries/recipes";
@@ -55,7 +56,14 @@ export type ImportPreview = {
   conflicts: ImportConflict[];
 };
 
-type LocalCategory = { id: string; name: string; isSystem: boolean };
+/** `name` = angezeigter Name (Standard-Kategorien in der aktiven Sprache), `storedName` = gespeichert. */
+type LocalCategory = {
+  id: string;
+  name: string;
+  storedName: string;
+  key: string | null;
+  isSystem: boolean;
+};
 type LocalProduct = { id: string; name: string; categoryId: string };
 
 /** Jedes Produkt nur einmal (der erste Eintrag zählt). */
@@ -71,9 +79,15 @@ function uniqueItems(items: TransferItem[]): TransferItem[] {
 
 function loadContext() {
   const categories: LocalCategory[] = db
-    .select({ id: category.id, name: category.name, isSystem: category.isSystem })
+    .select({
+      id: category.id,
+      name: category.name,
+      key: category.key,
+      isSystem: category.isSystem,
+    })
     .from(category)
-    .all();
+    .all()
+    .map((row) => ({ ...row, storedName: row.name, name: categoryLabel(row.key, row.name) }));
   const system = categories.find((row) => row.isSystem);
   if (!system) throw new Error("system category missing");
 
@@ -85,12 +99,21 @@ function loadContext() {
     products.set(normalizeName(row.name), row);
   }
 
-  /** Kategorie des Absenders hier: gleicher Name, sonst „Sonstiges“. */
-  const resolveCategory = (name: string | null): LocalCategory => {
+  /**
+   * Kategorie des Absenders hier: gleiche Standard-Kategorie (Schlüssel, sprachunabhängig), sonst
+   * gleicher Name (angezeigt oder gespeichert), sonst „Sonstiges“.
+   */
+  const resolveCategory = (name: string | null, key?: string): LocalCategory => {
     if (name === null) return system;
+    const byKey = key ? categories.find((row) => !row.isSystem && row.key === key) : undefined;
+    if (byKey) return byKey;
     const normalized = normalizeName(name);
     return (
-      categories.find((row) => !row.isSystem && normalizeName(row.name) === normalized) ?? system
+      categories.find(
+        (row) =>
+          !row.isSystem &&
+          (normalizeName(row.name) === normalized || normalizeName(row.storedName) === normalized)
+      ) ?? system
     );
   };
 
@@ -123,7 +146,7 @@ export function analyzeImport({ payload }: DecodedTransfer): ImportPreview {
   for (const item of uniqueItems(payload.items)) {
     const key = normalizeName(item.product.name);
     const local = products.get(key);
-    const incomingCategory = resolveCategory(item.product.category);
+    const incomingCategory = resolveCategory(item.product.category, item.product.categoryKey);
     let conflict = false;
 
     if (local) {
@@ -247,7 +270,8 @@ export function saveImport(
             .values({
               id: plan.productId,
               name: plan.item.product.name,
-              categoryId: resolveCategory(plan.item.product.category).id,
+              categoryId: resolveCategory(plan.item.product.category, plan.item.product.categoryKey)
+                .id,
               createdAt: now,
             })
             .run();
@@ -255,7 +279,10 @@ export function saveImport(
         } else if (plan.kind === "overwrite") {
           replaced.push(...getProductImages(plan.productId));
           db.update(product)
-            .set({ categoryId: resolveCategory(plan.item.product.category).id })
+            .set({
+              categoryId: resolveCategory(plan.item.product.category, plan.item.product.categoryKey)
+                .id,
+            })
             .where(eq(product.id, plan.productId))
             .run();
           db.delete(productImage).where(eq(productImage.productId, plan.productId)).run();

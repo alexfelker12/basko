@@ -3,6 +3,7 @@ import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { newId } from "@/lib/db/id";
 import { category, listItem, product } from "@/lib/db/schema";
+import { categoryLabel } from "@/lib/category-name";
 import type { Unit } from "@/lib/units";
 
 import { touchList } from "./lists";
@@ -14,7 +15,10 @@ export type ListItemRow = {
   productId: string;
   productName: string;
   categoryId: string;
+  /** Angezeigter Name (Standard-Kategorien in der aktiven Sprache). */
   categoryName: string;
+  /** Schlüssel einer Standard-Kategorie (Transfer), sonst `null`. */
+  categoryKey: string | null;
   categoryIsSystem: boolean;
   categorySortOrder: number;
   quantity: number;
@@ -35,6 +39,7 @@ export function getListItems(listId: string): ListItemRow[] {
       productName: product.name,
       categoryId: category.id,
       categoryName: category.name,
+      categoryKey: category.key,
       categoryIsSystem: category.isSystem,
       categorySortOrder: category.sortOrder,
       quantity: listItem.quantity,
@@ -47,7 +52,8 @@ export function getListItems(listId: string): ListItemRow[] {
     .innerJoin(product, eq(product.id, listItem.productId))
     .innerJoin(category, eq(category.id, product.categoryId))
     .where(and(eq(listItem.listId, listId), isNull(listItem.deletedAt)))
-    .all();
+    .all()
+    .map((row) => ({ ...row, categoryName: categoryLabel(row.categoryKey, row.categoryName) }));
 }
 
 export type ItemValues = {

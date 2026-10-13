@@ -9,6 +9,9 @@ export const CATEGORY_NAME_MAX = 40;
  * (`isSystem`), die immer am Ende steht und nicht umbenannt oder gelöscht werden kann.
  * Namen sind eindeutig ohne Beachtung der Groß-/Kleinschreibung – vollständig (inkl. Umlaute)
  * prüft das die App; der Index ist das Sicherheitsnetz (SQLite `lower()` kennt nur ASCII).
+ * `key`: Standard-Kategorien und „Sonstiges“ (`seed.categories.<key>`) – angezeigt wird dann der
+ * Name in der aktiven Sprache (`categoryLabel`), `name` hält nur den Namen vom Anlegen. Eigene und
+ * umbenannte Kategorien haben `null`.
  */
 export const category = sqliteTable(
   "category",
@@ -17,8 +20,10 @@ export const category = sqliteTable(
     name: text("name").notNull(),
     sortOrder: integer("sort_order").notNull(),
     isSystem: integer("is_system", { mode: "boolean" }).notNull().default(false),
+    key: text("key"),
   },
   (t) => [
+    uniqueIndex("category_key_unique").on(t.key),
     uniqueIndex("category_name_unique").on(sql`lower(${t.name})`),
     uniqueIndex("category_single_system")
       .on(t.isSystem)

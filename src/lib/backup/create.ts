@@ -84,11 +84,12 @@ export async function buildBackup(): Promise<{ payload: BackupPayload; images: T
       createdAt: Date.now(),
       appVersion: Constants.expoConfig?.version ?? null,
       settings: { theme: settings.theme, productsView: settings.productsView },
-      categories: categories.map(({ id, name, sortOrder, isSystem }) => ({
+      categories: categories.map(({ id, name, sortOrder, isSystem, key }) => ({
         id,
         name,
         sortOrder,
         isSystem,
+        key,
       })),
       products,
       recipes: recipes.map((row) => ({ ...row, createdAt: ms(row.createdAt) })),

@@ -5,8 +5,8 @@ import {
 } from "@tanstack/react-query";
 
 import { db } from "@/lib/db";
-import { localizeDefaultCategories } from "@/lib/db/seed";
-import { resolveLocale, type LanguageSetting } from "@/lib/i18n";
+import { resolveLocale, setLocale, type LanguageSetting } from "@/lib/i18n";
+import { queryKeys } from "@/lib/query-keys";
 import {
   readSettings,
   writeSetting,
@@ -61,9 +61,10 @@ export function takeReturnRouteAfterLanguageChange(): string | null {
 }
 
 /**
- * Sprache wechseln (8a): Standard-Kategorien und „Sonstiges“ in die neue Sprache übernehmen, alle
- * Abfragen neu laden und die Einstellung speichern – das Root-Layout stellt daraufhin die Sprache
- * um, hängt die Screens neu ein und kehrt zu `returnRoute` zurück (die Einstellungen).
+ * Sprache wechseln (8a): Sprache sofort umstellen und Listen- und Katalog-Abfragen aus dem Cache
+ * werfen – sie enthalten übersetzte Kategorienamen (`categoryLabel`) und werden beim Neu-Einhängen
+ * in der neuen Sprache gelesen. Dann die Einstellung speichern: Das Root-Layout
+ * hängt daraufhin die Screens neu ein und kehrt zu `returnRoute` zurück (die Einstellungen).
  */
 export function useChangeLanguage(returnRoute: string) {
   const queryClient = useQueryClient();
@@ -71,11 +72,9 @@ export function useChangeLanguage(returnRoute: string) {
 
   return (language: LanguageSetting) => {
     returnRouteAfterLanguageChange = returnRoute;
-    if (localizeDefaultCategories(db, resolveLocale(language))) {
-      queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] !== settingsQueryKey[0],
-      });
-    }
+    setLocale(resolveLocale(language));
+    queryClient.removeQueries({ queryKey: queryKeys.lists });
+    queryClient.removeQueries({ queryKey: queryKeys.products });
     updateSetting.mutate({ key: "language", value: language });
   };
 }

@@ -25,6 +25,11 @@ const itemSchema = z.object({
     name: z.string().trim().min(1).max(PRODUCT_NAME_MAX),
     /** Kategoriename; `null` = Systemkategorie „Sonstiges“ (über `isSystem`, nicht den Namen). */
     category: z.string().trim().min(1).max(200).nullable(),
+    /**
+     * Schlüssel einer Standard-Kategorie (seit Phase 7, optional): findet sie beim Empfänger auch in
+     * einer anderen Sprache. Ältere Stände ignorieren das Feld, `formatVersion` bleibt 1.
+     */
+    categoryKey: z.string().min(1).max(40).optional(),
     images: z.array(imageRefSchema).max(PRODUCT_IMAGES_MAX),
   }),
   quantity: z.number().positive(),
