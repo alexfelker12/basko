@@ -11,19 +11,11 @@
     },
     "preview": {
       "distribution": "internal",
-      "node": "22.13.0",
-      "env": {
-        "EXPO_UNSTABLE_METRO_OPTIMIZE_GRAPH": "1",
-        "EXPO_UNSTABLE_TREE_SHAKING": "1"
-      }
+      "node": "22.13.0"
     },
     "production": {
       "autoIncrement": true,
-      "node": "22.13.0",
-      "env": {
-        "EXPO_UNSTABLE_METRO_OPTIMIZE_GRAPH": "1",
-        "EXPO_UNSTABLE_TREE_SHAKING": "1"
-      }
+      "node": "22.13.0"
     }
   },
   "submit": {

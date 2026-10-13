@@ -1,20 +1,3 @@
-diff --git a/dist/commonjs/metro/injection-code.js b/dist/commonjs/metro/injection-code.js
---- a/dist/commonjs/metro/injection-code.js
-+++ b/dist/commonjs/metro/injection-code.js
-@@ -20,8 +20,10 @@
-   return Buffer.from(importStatements);
- }
- function getNativeInjectionCode(cssFilePaths, values) {
--  const importStatements = cssFilePaths.map(filePath => `import "${filePath}";`).join("\n");
-+  // Basko-Patch: CommonJS statt ESM – mit Expo-Tree-Shaking blieb `import` sonst unübersetzt
-+  // im Bundle stehen (Hermes: "'import' statement requires module mode").
-+  const importStatements = cssFilePaths.map(filePath => `require("${filePath}");`).join("\n");
-   const contents = values.map(value => `StyleCollection.inject(${JSON.stringify(value)});`).join("\n");
--  return Buffer.from(`import { StyleCollection } from "react-native-css/native-internal";\n${importStatements}\n${contents};export {};`);
-+  return Buffer.from(`const { StyleCollection } = require("react-native-css/native-internal");\n${importStatements}\n${contents};`);
- }
- //# sourceMappingURL=injection-code.js.map
-\ No newline at end of file
 diff --git a/dist/commonjs/metro/metro-transformer.js b/dist/commonjs/metro/metro-transformer.js
 index 7aa9d00f7033199efde3a6e38ddd098ace6a28a6..451a6430d773c6bdce31560f6275726a413a1252 100644
 --- a/dist/commonjs/metro/metro-transformer.js
@@ -43,23 +26,6 @@ index cc79d864f09ce2fb162f18b68fa561194013dd40..bfeeac674ef670394e8aafbcef8b52e9
      const lastToken = tokens.pop();
      for (const token of tokens) {
        target[token] ??= {};
-diff --git a/dist/module/metro/injection-code.js b/dist/module/metro/injection-code.js
---- a/dist/module/metro/injection-code.js
-+++ b/dist/module/metro/injection-code.js
-@@ -15,8 +15,10 @@
-   return Buffer.from(importStatements);
- }
- export function getNativeInjectionCode(cssFilePaths, values) {
--  const importStatements = cssFilePaths.map(filePath => `import "${filePath}";`).join("\n");
-+  // Basko-Patch: CommonJS statt ESM – mit Expo-Tree-Shaking blieb `import` sonst unübersetzt
-+  // im Bundle stehen (Hermes: "'import' statement requires module mode").
-+  const importStatements = cssFilePaths.map(filePath => `require("${filePath}");`).join("\n");
-   const contents = values.map(value => `StyleCollection.inject(${JSON.stringify(value)});`).join("\n");
--  return Buffer.from(`import { StyleCollection } from "react-native-css/native-internal";\n${importStatements}\n${contents};export {};`);
-+  return Buffer.from(`const { StyleCollection } = require("react-native-css/native-internal");\n${importStatements}\n${contents};`);
- }
- //# sourceMappingURL=injection-code.js.map
-\ No newline at end of file
 diff --git a/dist/module/metro/metro-transformer.js b/dist/module/metro/metro-transformer.js
 index 7293ae17ef66005304e8740b9e1f9d097afcb79b..4728d5d0fc7394d44d8cba6ed7cd64e57f15d43e 100644
 --- a/dist/module/metro/metro-transformer.js
@@ -88,29 +54,6 @@ index 6dc6f3f447ab4a4a5f3c99a1f2207bd434b0736d..c87b835061f54cff19430ab00853c753
      const lastToken = tokens.pop();
      for (const token of tokens) {
        target[token] ??= {};
-diff --git a/src/metro/injection-code.ts b/src/metro/injection-code.ts
---- a/src/metro/injection-code.ts
-+++ b/src/metro/injection-code.ts
-@@ -20,8 +20,10 @@
-   cssFilePaths: string[],
-   values: unknown[],
- ) {
-+  // Basko-Patch: CommonJS statt ESM – mit Expo-Tree-Shaking blieb `import` sonst unübersetzt
-+  // im Bundle stehen (Hermes: "'import' statement requires module mode").
-   const importStatements = cssFilePaths
--    .map((filePath) => `import "${filePath}";`)
-+    .map((filePath) => `require("${filePath}");`)
-     .join("\n");
- 
-   const contents = values
-@@ -29,6 +31,6 @@
-     .join("\n");
- 
-   return Buffer.from(
--    `import { StyleCollection } from "react-native-css/native-internal";\n${importStatements}\n${contents};export {};`,
-+    `const { StyleCollection } = require("react-native-css/native-internal");\n${importStatements}\n${contents};`,
-   );
- }
 diff --git a/src/metro/metro-transformer.ts b/src/metro/metro-transformer.ts
 index e935ba67f726dcc464742cf800191b4eaf393a7f..374a9620f9c23693f26318e206ea209bf2e3c2f2 100644
 --- a/src/metro/metro-transformer.ts
