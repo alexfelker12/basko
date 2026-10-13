@@ -13,7 +13,7 @@ function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
 
-/** Datum im Verlauf (6a): „heute“, „gestern“, innerhalb von 7 Tagen der Wochentag, sonst „TT.MM.“. */
+/** Datum im Verlauf (6a): „heute“, „gestern“, innerhalb von 7 Tagen der Wochentag, sonst „TT.MM.“ bzw. „TT/MM“. */
 export function formatHistoryDate(date: Date, now = new Date()): string {
   // Gerundet, damit Sommer-/Winterzeit (23 bzw. 25 Stunden) nicht stört
   const days = Math.round((startOfDay(now) - startOfDay(date)) / DAY_MS);
@@ -22,7 +22,7 @@ export function formatHistoryDate(date: Date, now = new Date()): string {
   if (days < 7) return t(`transfer.weekdays.${WEEKDAYS[date.getDay()]}`);
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${day}.${month}.`;
+  return t("transfer.shortDate", { day, month });
 }
 
 /** Verlaufseintrag (6a): Pfeil ↓ empfangen/importiert bzw. ↑ gesendet/exportiert, Name, Zeile darunter. */

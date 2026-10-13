@@ -5,6 +5,8 @@ import {
 } from "@tanstack/react-query";
 
 import { db } from "@/lib/db";
+import { localizeDefaultCategories } from "@/lib/db/seed";
+import { resolveLocale, type LanguageSetting } from "@/lib/i18n";
 import {
   readSettings,
   writeSetting,
@@ -46,4 +48,34 @@ export function useUpdateSetting() {
       }
     },
   });
+}
+
+/** Route, auf der der Sprachwechsel ausgelöst wurde – das Root-Layout kehrt danach dorthin zurück. */
+let returnRouteAfterLanguageChange: string | null = null;
+
+/** Einmal abholen (Root-Layout, nach dem Neu-Einhängen der Screens). */
+export function takeReturnRouteAfterLanguageChange(): string | null {
+  const route = returnRouteAfterLanguageChange;
+  returnRouteAfterLanguageChange = null;
+  return route;
+}
+
+/**
+ * Sprache wechseln (8a): Standard-Kategorien und „Sonstiges“ in die neue Sprache übernehmen, alle
+ * Abfragen neu laden und die Einstellung speichern – das Root-Layout stellt daraufhin die Sprache
+ * um, hängt die Screens neu ein und kehrt zu `returnRoute` zurück (die Einstellungen).
+ */
+export function useChangeLanguage(returnRoute: string) {
+  const queryClient = useQueryClient();
+  const updateSetting = useUpdateSetting();
+
+  return (language: LanguageSetting) => {
+    returnRouteAfterLanguageChange = returnRoute;
+    if (localizeDefaultCategories(db, resolveLocale(language))) {
+      queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] !== settingsQueryKey[0],
+      });
+    }
+    updateSetting.mutate({ key: "language", value: language });
+  };
 }

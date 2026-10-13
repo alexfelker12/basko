@@ -1,11 +1,14 @@
 import { getLocales } from "expo-localization";
 
 import de from "./locales/de";
+import en from "./locales/en";
 
 /**
- * Schlanke i18n-Schicht (Spezifikation → Grundlagen → Sprache).
- * Vorerst nur Deutsch; die Gerätesprache wird über expo-localization gelesen,
- * unbekannte Sprachen fallen auf Deutsch zurück. Rezeptinhalte laufen nicht hierüber.
+ * Schlanke i18n-Schicht (Spezifikation → Grundlagen → Sprache): Deutsch und Englisch.
+ * Die Sprache kommt aus der Einstellung `language` (8a): „System“ folgt der Gerätesprache
+ * (expo-localization), unbekannte Gerätesprachen bekommen Englisch. Rezeptinhalte laufen nicht
+ * hierüber. Gewechselt wird zur Laufzeit über `setLocale` – das Root-Layout hängt danach alle
+ * Screens neu ein, damit jeder Text neu übersetzt wird.
  */
 
 type PluralForms = { one: string; other: string };
@@ -20,34 +23,72 @@ type DictionaryShape<T> = {
 };
 export type Dictionary = DictionaryShape<typeof de>;
 
-const dictionaries = { de } satisfies Record<string, Dictionary>;
+const dictionaries = { de, en } satisfies Record<string, Dictionary>;
 export type Locale = keyof typeof dictionaries;
 
-const FALLBACK_LOCALE: Locale = "de";
+/** Einstellung „Sprache“ (8a). */
+export const LANGUAGE_SETTINGS = ["system", "de", "en"] as const;
+export type LanguageSetting = (typeof LANGUAGE_SETTINGS)[number];
+
+/** Gerätesprache weder Deutsch noch Englisch → Englisch. */
+const DEVICE_FALLBACK_LOCALE: Locale = "en";
+/** Fehlt ein Text (sollte der Typ-Check verhindern), gilt Deutsch. */
+const TEXT_FALLBACK_LOCALE: Locale = "de";
 
 /** Pluralregel je Sprache. */
 const pluralRules: Record<Locale, (count: number) => keyof PluralForms> = {
   de: (count) => (count === 1 ? "one" : "other"),
+  en: (count) => (count === 1 ? "one" : "other"),
 };
 
-function resolveLocale(): Locale {
+/** BCP-47-Tag für Intl (Zahlen, Datum, Sortierung); Englisch britisch: 28/09/2026, 1.5. */
+const intlLocale: Record<Locale, string> = { de: "de-DE", en: "en-GB" };
+
+/** Sprache zur Einstellung; „system“ nimmt die erste unterstützte Gerätesprache. */
+export function resolveLocale(setting: LanguageSetting): Locale {
+  if (setting !== "system") return setting;
   for (const { languageCode } of getLocales()) {
-    if (languageCode && languageCode in dictionaries) {
-      return languageCode as Locale;
-    }
+    if (languageCode && languageCode in dictionaries) return languageCode as Locale;
   }
-  return FALLBACK_LOCALE;
+  return DEVICE_FALLBACK_LOCALE;
 }
 
-/** Aktive Sprache, einmal beim Start bestimmt. */
-export const locale: Locale = resolveLocale();
+let locale: Locale = resolveLocale("system");
 
-/** BCP-47-Tag für Intl (Zahlen, Sortierung). */
-const intlLocale: Record<Locale, string> = { de: "de-DE" };
+/** Aktive Sprache. */
+export function getLocale(): Locale {
+  return locale;
+}
 
 const numberFormats = new Map<string, Intl.NumberFormat>();
+let dateFormat = createDateFormat();
+let textCollator = createCollator();
 
-/** Zahl im Format der aktiven Sprache, z. B. „1,0“ oder „0,75“. */
+function createDateFormat() {
+  return new Intl.DateTimeFormat(intlLocale[locale], {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function createCollator() {
+  return new Intl.Collator(intlLocale[locale], { sensitivity: "base", numeric: true });
+}
+
+/**
+ * Stellt die Sprache um (beim Start und bei einer Änderung in 8a) und baut die Formate neu.
+ * Ohne Änderung passiert nichts – darf daher auch beim Rendern aufgerufen werden.
+ */
+export function setLocale(next: Locale) {
+  if (next === locale) return;
+  locale = next;
+  numberFormats.clear();
+  dateFormat = createDateFormat();
+  textCollator = createCollator();
+}
+
+/** Zahl im Format der aktiven Sprache, z. B. „1,0“ bzw. „1.0“. */
 export function formatNumber(
   value: number,
   { min = 0, max = 2 }: { min?: number; max?: number } = {}
@@ -65,19 +106,15 @@ export function formatNumber(
   return format.format(value);
 }
 
-const dateFormat = new Intl.DateTimeFormat(intlLocale[locale], {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-});
-
-/** Datum im Format der aktiven Sprache, z. B. „28.09.2026“ (Sicherung, 8e). */
+/** Datum im Format der aktiven Sprache, z. B. „28.09.2026“ bzw. „28/09/2026“ (Sicherung, 8e). */
 export function formatDate(value: Date | number): string {
   return dateFormat.format(value);
 }
 
 /** Alphabetische Sortierung der aktiven Sprache, ohne Beachtung der Groß-/Kleinschreibung. */
-export const collator = new Intl.Collator(intlLocale[locale], { sensitivity: "base", numeric: true });
+export const collator: Pick<Intl.Collator, "compare"> = {
+  compare: (a, b) => textCollator.compare(a, b),
+};
 
 /** Alle gültigen Schlüssel als Punkt-Pfade, z. B. "tabs.lists". */
 type Paths<T, Prefix extends string = ""> = {
@@ -109,13 +146,10 @@ function interpolate(text: string, params?: TranslationParams) {
   );
 }
 
-/**
- * Übersetzt einen Schlüssel. Pluralformen wählen über `params.count`.
- * Fehlt ein Text in der aktiven Sprache, wird Deutsch genommen, sonst der Schlüssel selbst.
- */
-export function t(key: TranslationKey, params?: TranslationParams): string {
+/** Wie `t`, aber in einer bestimmten Sprache – z. B. Standard-Kategorien beim Sprachwechsel. */
+export function translate(target: Locale, key: TranslationKey, params?: TranslationParams): string {
   const entry =
-    lookup(dictionaries[locale], key) ?? lookup(dictionaries[FALLBACK_LOCALE], key);
+    lookup(dictionaries[target], key) ?? lookup(dictionaries[TEXT_FALLBACK_LOCALE], key);
 
   if (entry === undefined) {
     if (__DEV__) console.warn(`[i18n] Fehlender Text: ${key}`);
@@ -125,5 +159,13 @@ export function t(key: TranslationKey, params?: TranslationParams): string {
   if (typeof entry === "string") return interpolate(entry, params);
 
   const count = Number(params?.count ?? 0);
-  return interpolate(entry[pluralRules[locale](count)], params);
+  return interpolate(entry[pluralRules[target](count)], params);
 }
+
+/** Übersetzt einen Schlüssel in der aktiven Sprache. Pluralformen wählen über `params.count`. */
+export function t(key: TranslationKey, params?: TranslationParams): string {
+  return translate(locale, key, params);
+}
+
+/** Alle Sprachen – z. B. um Standard-Kategorien in jeder Sprache wiederzuerkennen. */
+export const LOCALES = Object.keys(dictionaries) as Locale[];

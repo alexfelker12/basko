@@ -2,9 +2,10 @@ import "@/global.css";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { NavigationBar } from "expo-navigation-bar";
-import { Stack } from "expo-router";
+import { router, Stack, type Href } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider, useResizeMode } from "react-native-keyboard-controller";
@@ -15,7 +16,8 @@ import { AppToastProvider } from "@/components/toast-host";
 import { TransferHost } from "@/components/transfer/transfer-host";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { useAppSetup } from "@/hooks/use-app-setup";
-import { useSettings } from "@/hooks/use-settings";
+import { takeReturnRouteAfterLanguageChange, useSettings } from "@/hooks/use-settings";
+import { resolveLocale, setLocale } from "@/lib/i18n";
 import { queryClient } from "@/lib/query-client";
 
 // Der Splash bleibt stehen, bis Migrationen, Seed und Einstellungen (inkl. Thema) bereit sind.
@@ -27,7 +29,17 @@ function hideSplash() {
 }
 
 function ThemedApp() {
-  const { theme } = useSettings();
+  const { theme, language } = useSettings();
+  // Sprache vor dem Rendern der Screens setzen (ohne Änderung wirkungslos). Wechselt sie, hängt
+  // `key` alle Screens neu ein – jeder Text wird neu übersetzt (der React Compiler memoisiert
+  // sonst die alten Texte). Danach zurück auf den Screen des Wechsels; stand er schon oben, bleibt
+  // alles, wie es ist, sonst wird er über der Startseite geöffnet.
+  const locale = resolveLocale(language);
+  setLocale(locale);
+  useEffect(() => {
+    const route = takeReturnRouteAfterLanguageChange();
+    if (route) requestAnimationFrame(() => router.navigate(route as Href));
+  }, [locale]);
 
   return (
     // Toasts liegen außerhalb, damit sie über allen Overlays (Sheets, Dialoge) erscheinen
@@ -43,6 +55,7 @@ function ThemedApp() {
           {/* „Daten ersetzen?“ – auch für von außen geöffnete Sicherungen (Phase 6) */}
           <RestoreHost />
           <Stack
+            key={locale}
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: "transparent" },

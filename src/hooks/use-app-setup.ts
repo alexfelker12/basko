@@ -5,7 +5,8 @@ import { settingsQueryKey } from "@/hooks/use-settings";
 import { db } from "@/lib/db";
 import migrations from "@/lib/db/migrations/migrations";
 import { purgeSoftDeleted } from "@/lib/db/purge";
-import { seedDatabase } from "@/lib/db/seed";
+import { localizeDefaultCategories, seedDatabase } from "@/lib/db/seed";
+import { resolveLocale, setLocale } from "@/lib/i18n";
 import { readSettings } from "@/lib/settings";
 import { applyColorScheme } from "@/lib/theme";
 
@@ -16,8 +17,9 @@ type SetupState =
 
 /**
  * Start der App, solange der Splash steht:
- * Migrationen → Seed („Sonstiges“ + Standard-Kategorien) → endgültig löschen,
- * was noch auf Rückgängig wartete → Einstellungen synchron lesen und das Thema setzen.
+ * Migrationen → Einstellungen synchron lesen, Sprache setzen → Seed („Sonstiges“ +
+ * Standard-Kategorien) und Kategorienamen der Sprache angleichen → endgültig löschen, was noch auf
+ * Rückgängig wartete → Thema setzen.
  */
 export function useAppSetup(): SetupState {
   const queryClient = useQueryClient();
@@ -30,9 +32,14 @@ export function useAppSetup(): SetupState {
     gcTime: Infinity,
     retry: false,
     queryFn: () => {
-      seedDatabase(db);
-      purgeSoftDeleted(db);
+      // Sprache zuerst: Der Seed legt die Standard-Kategorien in der aktiven Sprache an
       const settings = readSettings(db);
+      const locale = resolveLocale(settings.language);
+      setLocale(locale);
+      seedDatabase(db);
+      // Gerätesprache seit dem letzten Start geändert („System“): Standard-Kategorien mitziehen
+      localizeDefaultCategories(db, locale);
+      purgeSoftDeleted(db);
       queryClient.setQueryData(settingsQueryKey, settings);
       applyColorScheme(settings.theme);
       return true;
