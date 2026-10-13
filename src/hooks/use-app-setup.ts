@@ -4,7 +4,6 @@ import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { settingsQueryKey } from "@/hooks/use-settings";
 import { db } from "@/lib/db";
 import migrations from "@/lib/db/migrations/migrations";
-import { seedDemoData } from "@/lib/db/demo-seed";
 import { purgeSoftDeleted } from "@/lib/db/purge";
 import { seedDatabase } from "@/lib/db/seed";
 import { readSettings } from "@/lib/settings";
@@ -33,8 +32,6 @@ export function useAppSetup(): SetupState {
     queryFn: () => {
       seedDatabase(db);
       purgeSoftDeleted(db);
-      // Testdaten (ca. 30 Produkte, 5 Listen) – nur in der Entwicklung, einmal pro Gerät
-      if (__DEV__) seedDemoData(db);
       const settings = readSettings(db);
       queryClient.setQueryData(settingsQueryKey, settings);
       applyColorScheme(settings.theme);
