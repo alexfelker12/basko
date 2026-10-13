@@ -1,5 +1,6 @@
 import { Directory, File, Paths } from "expo-file-system";
 
+import { defaultCategoryKeyForName, SYSTEM_CATEGORY_KEY } from "@/lib/category-name";
 import { db } from "@/lib/db";
 import { newId } from "@/lib/db/id";
 import { seedDatabase } from "@/lib/db/seed";
@@ -23,6 +24,21 @@ function insertChunked<T>(rows: T[], insert: (chunk: T[]) => void) {
 /** Liest eine gewählte bzw. geöffnete `.baskobackup`-Datei. Wirft `TransferFormatError`. */
 export async function readBackupFile(uri: string): Promise<DecodedBackup> {
   return parseBackup(decodeContainer(await readFileBytes(uri)));
+}
+
+/**
+ * Sicherungen vor Phase 7 kennen keine Kategorie-Schlüssel: „Sonstiges“ über `isSystem`, Standard-
+ * Kategorien über ihren Standardnamen (in irgendeiner Sprache), jeder Schlüssel nur einmal.
+ */
+function categoriesWithKeys(categories: BackupPayload["categories"]) {
+  const used = new Set(categories.flatMap((entry) => (entry.key ? [entry.key] : [])));
+  return categories.map((entry) => {
+    if (entry.key !== undefined) return { ...entry, key: entry.key };
+    const key = entry.isSystem ? SYSTEM_CATEGORY_KEY : defaultCategoryKeyForName(entry.name);
+    if (!key || used.has(key)) return { ...entry, key: null };
+    used.add(key);
+    return { ...entry, key };
+  });
 }
 
 /** Dateiendung eines Fotos aus der Sicherung, sonst `.jpg`. */
@@ -74,7 +90,9 @@ export function restoreBackup({ payload, images }: DecodedBackup): BackupPayload
       db.delete(product).run();
       db.delete(category).run();
 
-      insertChunked(payload.categories, (chunk) => db.insert(category).values(chunk).run());
+      insertChunked(categoriesWithKeys(payload.categories), (chunk) =>
+        db.insert(category).values(chunk).run()
+      );
       insertChunked(payload.products, (chunk) =>
         db
           .insert(product)

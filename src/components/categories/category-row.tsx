@@ -112,6 +112,7 @@ export function CategoryRenameRow({
             returnKeyType="done"
             onSubmitEditing={() => form.handleSubmit()}
             onBlur={onCancel}
+            blurOnKeyboardHide
             accessibilityLabel={t("storeOrder.nameInput")}
             className="flex-1"
             size="sm"

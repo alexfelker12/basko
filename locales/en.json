@@ -1,0 +1,9 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Basko needs the camera so you can take photos of products.",
+    "NSPhotoLibraryUsageDescription": "Basko needs access to your photos so you can add pictures to products.",
+    "NSLocalNetworkUsageDescription": "Basko looks for devices on the same Wi-Fi to send and receive shopping lists directly.",
+    "BaskoList": "Basko List",
+    "BaskoBackup": "Basko Backup"
+  }
+}

@@ -1,22 +1,11 @@
 import { count, eq } from "drizzle-orm";
 
+import { DEFAULT_CATEGORY_KEYS, SYSTEM_CATEGORY_KEY } from "@/lib/category-name";
 import { t } from "@/lib/i18n";
 
 import type { Database } from ".";
 import { newId } from "./id";
 import { category } from "./schema";
-
-/** Standard-Kategorien beim ersten Start, in dieser Ladenreihenfolge (Spezifikation → Kategorien). */
-const DEFAULT_CATEGORY_KEYS = [
-  "produce",
-  "bakery",
-  "chilled",
-  "meatFish",
-  "frozen",
-  "drinks",
-  "drugstore",
-  "household",
-] as const;
 
 /**
  * Legt beim ersten Start die Standard-Kategorien an und stellt sicher,
@@ -34,6 +23,7 @@ export function seedDatabase(db: Database) {
             name: t(`seed.categories.${key}`),
             sortOrder: index,
             isSystem: false,
+            key,
           }))
         )
         .run();
@@ -53,6 +43,7 @@ export function seedDatabase(db: Database) {
           name: t("seed.categories.other"),
           sortOrder: Number.MAX_SAFE_INTEGER,
           isSystem: true,
+          key: SYSTEM_CATEGORY_KEY,
         })
         .run();
     }

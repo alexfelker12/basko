@@ -182,6 +182,13 @@ const de = {
       system: "System",
       dark: "Dunkel",
     },
+    language: "Sprache",
+    /** Sprachnamen in ihrer eigenen Sprache – in allen Wörterbüchern gleich */
+    languages: {
+      system: "System",
+      de: "Deutsch",
+      en: "English",
+    },
     backup: "Daten & Sicherung",
     about: "Über die App",
     recipeSource: "Rezepte von API Ninjas",
@@ -262,6 +269,8 @@ const de = {
     listMissing: "{name} existiert nicht mehr",
     today: "heute",
     yesterday: "gestern",
+    /** Älter als eine Woche (6a) */
+    shortDate: "{day}.{month}.",
     weekdays: {
       sun: "So",
       mon: "Mo",

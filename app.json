@@ -6,7 +6,13 @@
     "orientation": "portrait",
     "scheme": "basko",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/images/icon.png",
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "monochromeImage": "./assets/images/monochrome-icon.png",
+        "backgroundColor": "#3E5C46"
+      },
       "predictiveBackGestureEnabled": false,
       "package": "com.alexfelker.basko",
       "softwareKeyboardLayoutMode": "resize",
@@ -79,14 +85,14 @@
       "infoPlist": {
         "CFBundleDocumentTypes": [
           {
-            "CFBundleTypeName": "Basko-Liste",
+            "CFBundleTypeName": "BaskoList",
             "CFBundleTypeRole": "Viewer",
             "LSItemContentTypes": [
               "com.alexfelker.basko.list"
             ]
           },
           {
-            "CFBundleTypeName": "Basko-Sicherung",
+            "CFBundleTypeName": "BaskoBackup",
             "CFBundleTypeRole": "Viewer",
             "LSItemContentTypes": [
               "com.alexfelker.basko.backup"
@@ -96,7 +102,7 @@
         "UTImportedTypeDeclarations": [
           {
             "UTTypeIdentifier": "com.alexfelker.basko.list",
-            "UTTypeDescription": "Basko-Liste",
+            "UTTypeDescription": "BaskoList",
             "UTTypeConformsTo": [
               "public.data"
             ],
@@ -109,7 +115,7 @@
           },
           {
             "UTTypeIdentifier": "com.alexfelker.basko.backup",
-            "UTTypeDescription": "Basko-Sicherung",
+            "UTTypeDescription": "BaskoBackup",
             "UTTypeConformsTo": [
               "public.data"
             ],
@@ -121,14 +127,20 @@
             }
           }
         ],
-        "NSLocalNetworkUsageDescription": "Basko sucht Geräte im selben WLAN, um Einkaufslisten direkt zu senden und zu empfangen.",
+        "NSLocalNetworkUsageDescription": "Basko looks for devices on the same Wi-Fi to send and receive shopping lists directly.",
+        "CFBundleAllowMixedLocalizations": true,
         "NSBonjourServices": [
           "_basko._tcp"
         ]
       }
     },
+    "locales": {
+      "de": "./locales/de.json",
+      "en": "./locales/en.json"
+    },
     "web": {
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -137,8 +149,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Basko braucht Zugriff auf deine Fotos, damit du Produkten Bilder hinzufügen kannst.",
-          "cameraPermission": "Basko braucht die Kamera, damit du Produkte fotografieren kannst.",
+          "photosPermission": "Basko needs access to your photos so you can add pictures to products.",
+          "cameraPermission": "Basko needs the camera so you can take photos of products.",
           "microphonePermission": false
         }
       ],

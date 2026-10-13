@@ -6,23 +6,28 @@ import { View } from "react-native";
 import { ScreenPattern } from "@/components/screen-pattern";
 import { SegmentedControl } from "@/components/segmented-control";
 import { DeviceNameDialog } from "@/components/settings/device-name-dialog";
+import { LanguageSheet } from "@/components/settings/language-sheet";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { StackHeader } from "@/components/stack-header";
 import { useAppToast } from "@/hooks/use-app-toast";
-import { useSettings, useUpdateSetting } from "@/hooks/use-settings";
-import { t } from "@/lib/i18n";
+import { useChangeLanguage, useSettings, useUpdateSetting } from "@/hooks/use-settings";
+import { t, type LanguageSetting } from "@/lib/i18n";
 import { THEME_MODES } from "@/lib/theme";
 
 /**
- * Einstellungen (8a): Ladenreihenfolge, Gerätename, Darstellung (wirkt sofort),
+ * Einstellungen (8a): Ladenreihenfolge, Gerätename, Darstellung (wirkt sofort), Sprache,
  * Daten & Sicherung und „Über die App“ mit Version und Quellenangabe.
  */
 export default function SettingsScreen() {
   const router = useRouter();
-  const { deviceName, theme } = useSettings();
+  const { deviceName, theme, language } = useSettings();
   const updateSetting = useUpdateSetting();
+  const changeLanguage = useChangeLanguage("/settings");
   const showToast = useAppToast();
   const [renaming, setRenaming] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
+  /** Gewählte Sprache – umgestellt wird erst, wenn das Sheet zu ist. */
+  const [nextLanguage, setNextLanguage] = useState<LanguageSetting | null>(null);
 
   const themeOptions = THEME_MODES.map((mode) => ({
     value: mode,
@@ -59,6 +64,11 @@ export default function SettingsScreen() {
             onChange={(value) => updateSetting.mutate({ key: "theme", value })}
           />
         </SettingsRow>
+        <SettingsRow
+          title={t("settings.language")}
+          value={t(`settings.languages.${language}`)}
+          onPress={() => setLanguageOpen(true)}
+        />
         <SettingsRow title={t("settings.backup")} onPress={() => router.push("/settings/backup")} />
         <SettingsRow
           title={t("settings.about")}
@@ -66,6 +76,20 @@ export default function SettingsScreen() {
           value={t("settings.version", { version: Constants.expoConfig?.version ?? "–" })}
         />
       </View>
+      <LanguageSheet
+        isOpen={languageOpen}
+        value={language}
+        onClose={() => setLanguageOpen(false)}
+        onSelect={(selected) => {
+          setLanguageOpen(false);
+          if (selected !== language) setNextLanguage(selected);
+        }}
+        onClosed={() => {
+          if (!nextLanguage) return;
+          setNextLanguage(null);
+          changeLanguage(nextLanguage);
+        }}
+      />
       <DeviceNameDialog
         isOpen={renaming}
         name={deviceName}

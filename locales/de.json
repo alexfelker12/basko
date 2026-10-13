@@ -1,0 +1,9 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Basko braucht die Kamera, damit du Produkte fotografieren kannst.",
+    "NSPhotoLibraryUsageDescription": "Basko braucht Zugriff auf deine Fotos, damit du Produkten Bilder hinzufügen kannst.",
+    "NSLocalNetworkUsageDescription": "Basko sucht Geräte im selben WLAN, um Einkaufslisten direkt zu senden und zu empfangen.",
+    "BaskoList": "Basko-Liste",
+    "BaskoBackup": "Basko-Sicherung"
+  }
+}

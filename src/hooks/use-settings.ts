@@ -5,6 +5,8 @@ import {
 } from "@tanstack/react-query";
 
 import { db } from "@/lib/db";
+import { resolveLocale, setLocale, type LanguageSetting } from "@/lib/i18n";
+import { queryKeys } from "@/lib/query-keys";
 import {
   readSettings,
   writeSetting,
@@ -46,4 +48,33 @@ export function useUpdateSetting() {
       }
     },
   });
+}
+
+/** Route, auf der der Sprachwechsel ausgelöst wurde – das Root-Layout kehrt danach dorthin zurück. */
+let returnRouteAfterLanguageChange: string | null = null;
+
+/** Einmal abholen (Root-Layout, nach dem Neu-Einhängen der Screens). */
+export function takeReturnRouteAfterLanguageChange(): string | null {
+  const route = returnRouteAfterLanguageChange;
+  returnRouteAfterLanguageChange = null;
+  return route;
+}
+
+/**
+ * Sprache wechseln (8a): Sprache sofort umstellen und Listen- und Katalog-Abfragen aus dem Cache
+ * werfen – sie enthalten übersetzte Kategorienamen (`categoryLabel`) und werden beim Neu-Einhängen
+ * in der neuen Sprache gelesen. Dann die Einstellung speichern: Das Root-Layout
+ * hängt daraufhin die Screens neu ein und kehrt zu `returnRoute` zurück (die Einstellungen).
+ */
+export function useChangeLanguage(returnRoute: string) {
+  const queryClient = useQueryClient();
+  const updateSetting = useUpdateSetting();
+
+  return (language: LanguageSetting) => {
+    returnRouteAfterLanguageChange = returnRoute;
+    setLocale(resolveLocale(language));
+    queryClient.removeQueries({ queryKey: queryKeys.lists });
+    queryClient.removeQueries({ queryKey: queryKeys.products });
+    updateSetting.mutate({ key: "language", value: language });
+  };
 }

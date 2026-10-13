@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import type { Database } from "@/lib/db";
 import { settings } from "@/lib/db/schema";
+import { LANGUAGE_SETTINGS } from "@/lib/i18n";
 import { THEME_MODES } from "@/lib/theme";
 
 /** Max. Länge des Gerätenamens (8b). */
@@ -23,6 +24,8 @@ export function getDefaultDeviceName(): string {
 /** Strenge Regeln für das Schreiben einzelner Einstellungen. */
 export const settingSchemas = {
   theme: z.enum(THEME_MODES),
+  /** Sprache (8a): „system“ folgt der Gerätesprache. */
+  language: z.enum(LANGUAGE_SETTINGS),
   deviceName: z.string().trim().min(1).max(DEVICE_NAME_MAX),
   productsView: z.enum(PRODUCTS_VIEWS),
   /** Ordner für „Sichern“ (8c, nur Android): Tree-URI aus der Ordnerauswahl des Systems. */
@@ -32,6 +35,7 @@ export const settingSchemas = {
 /** Lesen ist tolerant: fehlende oder ungültige Werte fallen auf den Standard zurück. */
 const settingsReadSchema = z.object({
   theme: settingSchemas.theme.catch("system"),
+  language: settingSchemas.language.catch("system"),
   deviceName: settingSchemas.deviceName.catch(() => getDefaultDeviceName()),
   productsView: settingSchemas.productsView.catch("list"),
   backupDirectory: settingSchemas.backupDirectory.catch(null),

@@ -11,6 +11,7 @@ import {
   product,
   productImage,
 } from "@/lib/db/schema";
+import { categoryLabel } from "@/lib/category-name";
 import { deleteProductImageFiles, storePhotoDrafts, type PhotoDraft } from "@/lib/images";
 import { isNameTaken } from "@/lib/names";
 import type { Unit } from "@/lib/units";
@@ -46,6 +47,7 @@ const catalogFields = {
   name: product.name,
   categoryId: product.categoryId,
   categoryName: category.name,
+  categoryKey: category.key,
   lastQuantity: product.lastQuantity,
   lastUnit: product.lastUnit,
   lastUsedAt: product.lastUsedAt,
@@ -63,18 +65,29 @@ export function getCatalog(): CatalogProduct[] {
     .from(product)
     .innerJoin(category, eq(category.id, product.categoryId))
     .orderBy(asc(product.name))
-    .all();
+    .all()
+    .map(toCatalogProduct);
 }
 
 export function getCatalogProduct(id: string): CatalogProduct | null {
-  return (
-    db
-      .select(catalogFields)
-      .from(product)
-      .innerJoin(category, eq(category.id, product.categoryId))
-      .where(eq(product.id, id))
-      .get() ?? null
-  );
+  const row = db
+    .select(catalogFields)
+    .from(product)
+    .innerJoin(category, eq(category.id, product.categoryId))
+    .where(eq(product.id, id))
+    .get();
+  return row ? toCatalogProduct(row) : null;
+}
+
+/** Kategoriename in der aktiven Sprache (Standard-Kategorien, siehe `categoryLabel`). */
+function toCatalogProduct({
+  categoryKey,
+  ...row
+}: Omit<CatalogProduct, "categoryName"> & {
+  categoryName: string;
+  categoryKey: string | null;
+}): CatalogProduct {
+  return { ...row, categoryName: categoryLabel(categoryKey, row.categoryName) };
 }
 
 /** Dateinamen aller Fotos eines Produkts in Reihenfolge (Vollbildansicht 4c, Bearbeiten 4d). */

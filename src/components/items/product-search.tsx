@@ -1,6 +1,6 @@
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { PlusIcon, SearchIcon } from "lucide-react-native";
-import { useMemo } from "react";
+import { useDeferredValue, useMemo } from "react";
 import { Pressable, View } from "react-native";
 
 import { HighlightedText } from "@/components/highlighted-text";
@@ -37,11 +37,13 @@ export function ProductSearch({
 }: ProductSearchProps) {
   const { data: catalog = [] } = useCatalog();
   const sheetKeyboard = useSheetKeyboardHandlers();
+  // Tippen bleibt flüssig: die Trefferliste rechnet React nachrangig mit dem letzten Stand
+  const deferredQuery = useDeferredValue(query);
   const results = useMemo(
-    () => searchProducts(catalog, query, itemIdsByProduct),
-    [catalog, query, itemIdsByProduct]
+    () => searchProducts(catalog, deferredQuery, itemIdsByProduct),
+    [catalog, deferredQuery, itemIdsByProduct]
   );
-  const trimmed = query.trim();
+  const trimmed = deferredQuery.trim();
 
   return (
     <View className="flex-1">
@@ -65,33 +67,37 @@ export function ProductSearch({
         </Input>
       </View>
 
-      <BottomSheetScrollView keyboardShouldPersistTaps="handled">
-        <View className="px-page pb-4">
-          {results.map((result) => (
-            <ResultRow key={result.product.id} result={result} onPress={() => onSelect(result)} />
-          ))}
-
-          {trimmed && results.length === 0 ? (
-            <View className="pt-4">
-              <Text className="text-xs text-soft">{t("search.noResult")}</Text>
-              <Pressable
-                onPress={() => onCreate(trimmed)}
-                role="button"
-                className="mt-1.5 flex-row items-center gap-3 border-b border-line py-3 active:opacity-70"
-              >
-                <View className="size-8 items-center justify-center rounded-[999px] bg-chip">
-                  <Icon as={PlusIcon} size="md" className="text-ink" />
-                </View>
-                <Text className="flex-1 text-base font-bold text-primary">
-                  {t("search.create", { name: trimmed })}
-                </Text>
-              </Pressable>
-            </View>
-          ) : null}
-        </View>
-        {/* Das hohe Sheet bleibt bei offener Tastatur stehen – Platz, um bis ans Ende zu scrollen */}
-        <KeyboardSpacer />
-      </BottomSheetScrollView>
+      {/* Virtualisiert: Bei großem Katalog trifft „a“ schnell Tausende Produkte */}
+      <BottomSheetFlatList
+        data={results}
+        keyExtractor={(result) => result.product.id}
+        keyboardShouldPersistTaps="handled"
+        renderItem={({ item }) => <ResultRow result={item} onPress={() => onSelect(item)} />}
+        ListFooterComponent={
+          <>
+            {trimmed && results.length === 0 ? (
+              <View className="px-page pt-4">
+                <Text className="text-xs text-soft">{t("search.noResult")}</Text>
+                <Pressable
+                  onPress={() => onCreate(trimmed)}
+                  role="button"
+                  className="mt-1.5 flex-row items-center gap-3 border-b border-line py-3 active:opacity-70"
+                >
+                  <View className="size-8 items-center justify-center rounded-[999px] bg-chip">
+                    <Icon as={PlusIcon} size="md" className="text-ink" />
+                  </View>
+                  <Text className="flex-1 text-base font-bold text-primary">
+                    {t("search.create", { name: trimmed })}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
+            <View className="h-4" />
+            {/* Das hohe Sheet bleibt bei offener Tastatur stehen – Platz, um bis ans Ende zu scrollen */}
+            <KeyboardSpacer />
+          </>
+        }
+      />
     </View>
   );
 }
@@ -100,7 +106,7 @@ function ResultRow({ result, onPress }: { result: ProductSearchResult; onPress: 
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center gap-3 border-b border-line py-3 active:opacity-70"
+      className="mx-page flex-row items-center gap-3 border-b border-line py-3 active:opacity-70"
     >
       <View className="min-w-0 flex-1">
         <HighlightedText parts={result.parts} className="text-base font-bold" />

@@ -4,6 +4,7 @@ import { Pressable, TextInput, View } from "react-native";
 
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { useBlurOnKeyboardHide } from "@/hooks/use-keyboard";
 import { useSheetKeyboardHandlers } from "@/hooks/use-sheet-keyboard";
 import { formatQuantity, unitLabel } from "@/lib/format";
 import { formatNumber, t } from "@/lib/i18n";
@@ -30,6 +31,8 @@ export function QuantityStepper({ value, unit, onChange }: QuantityStepperProps)
   const [draft, setDraft] = useState<string | null>(null);
   const sheetKeyboard = useSheetKeyboardHandlers();
   const label = `${formatQuantity(value, unit)} ${unitLabel(unit)}`;
+  // Eingefahrene Tastatur übernimmt die Zahl, sonst bliebe das Feld ohne Tastatur offen
+  useBlurOnKeyboardHide(draft !== null);
 
   const commit = () => {
     if (draft === null) return;

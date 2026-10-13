@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { isCategoryKey } from "@/lib/category-name";
 import {
   CATEGORY_NAME_MAX,
   LIST_ITEM_NOTE_MAX,
@@ -38,6 +39,8 @@ const categorySchema = z.object({
   name: z.string().trim().min(1).max(CATEGORY_NAME_MAX),
   sortOrder: z.number().int(),
   isSystem: z.boolean(),
+  /** Schlüssel einer Standard-Kategorie (seit Phase 7); fehlt er, wird er beim Wiederherstellen erkannt. */
+  key: z.string().min(1).max(40).nullable().optional(),
 });
 
 const productSchema = z.object({
@@ -136,8 +139,11 @@ export function parseBackup({ raw, images }: DecodedContainer): DecodedBackup {
   const categoryIds = new Set(payload.categories.map((category) => category.id));
   const productIds = new Set(payload.products.map((product) => product.id));
   const recipeIds = new Set(payload.recipes.map((recipe) => recipe.id));
+  const keys = payload.categories.flatMap((category) => (category.key ? [category.key] : []));
   const valid =
     payload.categories.filter((category) => category.isSystem).length === 1 &&
+    keys.every(isCategoryKey) &&
+    new Set(keys).size === keys.length &&
     categoryIds.size === payload.categories.length &&
     productIds.size === payload.products.length &&
     payload.products.every((product) => categoryIds.has(product.categoryId)) &&

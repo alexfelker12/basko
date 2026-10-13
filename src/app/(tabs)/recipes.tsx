@@ -119,6 +119,7 @@ export default function RecipesScreen() {
           icon={ChefHatIcon}
           title={t("recipes.empty.title")}
           text={t("recipes.empty.text")}
+          avoidKeyboard
         />
       ) : search.isPending ? (
         <View className="flex-1 items-center justify-center pb-15">
@@ -127,7 +128,7 @@ export default function RecipesScreen() {
       ) : search.isError ? (
         <SearchError error={search.error} onRetry={() => search.refetch()} />
       ) : search.data.length === 0 ? (
-        <EmptyState icon={SearchXIcon} title={t("recipes.noResults", { query })} />
+        <EmptyState icon={SearchXIcon} title={t("recipes.noResults", { query })} avoidKeyboard />
       ) : (
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="pb-6">
           {search.data.map((recipe, index) => (
@@ -182,12 +183,12 @@ function RecipeSwipeRow({
 function SearchError({ error, onRetry }: { error: Error; onRetry: () => void }) {
   if (error instanceof RecipeApiError && error.reason === "offline") {
     return (
-      <EmptyState icon={WifiOffIcon} title={t("recipes.offline")}>
+      <EmptyState icon={WifiOffIcon} title={t("recipes.offline")} avoidKeyboard>
         <Button variant="secondary" onPress={onRetry}>
           <ButtonText>{t("recipes.retry")}</ButtonText>
         </Button>
       </EmptyState>
     );
   }
-  return <EmptyState icon={CloudOffIcon} title={t("recipes.unavailable")} />;
+  return <EmptyState icon={CloudOffIcon} title={t("recipes.unavailable")} avoidKeyboard />;
 }
