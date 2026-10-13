@@ -9,6 +9,7 @@ import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider, useResizeMode } from "react-native-keyboard-controller";
 
+import { RestoreHost } from "@/components/backup/restore-host";
 import { ErrorScreen } from "@/components/error-screen";
 import { AppToastProvider } from "@/components/toast-host";
 import { TransferHost } from "@/components/transfer/transfer-host";
@@ -39,6 +40,8 @@ function ThemedApp() {
           <NavigationBar style="auto" />
           {/* Sichtbarkeit im Netzwerk und Transfer-Hinweise (Phase 4) */}
           <TransferHost />
+          {/* „Daten ersetzen?“ – auch für von außen geöffnete Sicherungen (Phase 6) */}
+          <RestoreHost />
           <Stack
             screenOptions={{
               headerShown: false,

@@ -26,7 +26,7 @@ export function exportFileName(listName: string): string {
 }
 
 /** Ordner im Cache leeren bzw. anlegen – alte Export-/Import-Dateien bleiben nicht liegen. */
-function freshCacheDirectory(name: string): Directory {
+export function freshCacheDirectory(name: string): Directory {
   const directory = new Directory(Paths.cache, name);
   if (directory.exists) directory.delete();
   directory.create({ intermediates: true, idempotent: true });
@@ -65,18 +65,24 @@ export async function exportListFile(
 }
 
 /**
- * Liest eine geöffnete `.basko`-Datei (`file://` oder `content://`). Wirft bei kaputten oder
- * fremden Dateien bzw. einer neueren `formatVersion`.
+ * Liest eine geöffnete bzw. gewählte Datei (`file://` oder `content://`) – `.basko` und
+ * `.baskobackup`.
  */
-export async function readTransferFile(uri: string): Promise<DecodedTransfer> {
-  let bytes: Uint8Array;
+export async function readFileBytes(uri: string): Promise<Uint8Array> {
   try {
-    bytes = await new File(uri).bytes();
+    return await new File(uri).bytes();
   } catch {
     // Manche Anbieter (`content://`) lassen sich nur kopieren – wie in digi-list über die alte API
-    const copy = new File(freshCacheDirectory(IMPORT_DIR), `import${BASKO_FILE_EXTENSION}`);
+    const copy = new File(freshCacheDirectory(IMPORT_DIR), "import");
     await copyAsync({ from: uri, to: copy.uri });
-    bytes = await copy.bytes();
+    return await copy.bytes();
   }
-  return decodeTransfer(bytes);
+}
+
+/**
+ * Liest eine geöffnete `.basko`-Datei. Wirft bei kaputten oder fremden Dateien bzw. einer neueren
+ * `formatVersion`.
+ */
+export async function readTransferFile(uri: string): Promise<DecodedTransfer> {
+  return decodeTransfer(await readFileBytes(uri));
 }

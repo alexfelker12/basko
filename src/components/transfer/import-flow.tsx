@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Pressable, View } from "react-native";
 
 import { QuantityChip } from "@/components/quantity-chip";
+import { SegmentedControl } from "@/components/segmented-control";
 import { Badge, BadgeIcon, BadgeText } from "@/components/ui/badge";
 import { Button, ButtonText } from "@/components/ui/button";
 import {
@@ -25,7 +26,6 @@ import {
   type ImportPreview,
 } from "@/lib/transfer/import";
 import { clearPendingImport, type PendingImport } from "@/lib/transfer/session";
-import { cn } from "@gluestack-ui/utils/nativewind-utils";
 
 interface ImportFlowProps {
   pending: PendingImport | null;
@@ -196,6 +196,11 @@ function ConflictStep({
   onSave: () => void;
   saving: boolean;
 }) {
+  const resolutionOptions = [
+    { value: "keep", label: t("importConflicts.keep") },
+    { value: "overwrite", label: t("importConflicts.overwrite") },
+  ] as const;
+
   return (
     <>
       <ModalHeader className="flex-col items-start pt-5">
@@ -223,9 +228,13 @@ function ConflictStep({
             <Text className="text-xs text-soft">
               {t("importConflicts.incoming", { details: conflictDetails(conflict.incoming) })}
             </Text>
-            <ResolutionToggle
+            {/* SegmentedControl Behalten/Überschreiben (6i) */}
+            <SegmentedControl
+              options={resolutionOptions}
               value={resolutions[conflict.key] ?? "keep"}
               onChange={(resolution) => onChange(conflict.key, resolution)}
+              stretch
+              className="mt-2.5"
             />
           </View>
         ))}
@@ -251,45 +260,5 @@ function OutlineChip({ label, onPress }: { label: string; onPress: () => void })
     >
       <Text className="text-sm font-bold">{label}</Text>
     </Pressable>
-  );
-}
-
-const RESOLUTIONS = [
-  { value: "keep", label: "importConflicts.keep" },
-  { value: "overwrite", label: "importConflicts.overwrite" },
-] as const;
-
-/** SegmentedControl Behalten/Überschreiben (6i): Pille auf `chip`, gewählt = `surface`. */
-function ResolutionToggle({
-  value,
-  onChange,
-}: {
-  value: ConflictResolution;
-  onChange: (value: ConflictResolution) => void;
-}) {
-  return (
-    <View className="mt-2.5 flex-row rounded-[999px] bg-chip p-0.75" role="radiogroup">
-      {RESOLUTIONS.map((option) => {
-        const selected = option.value === value;
-        return (
-          <Pressable
-            key={option.value}
-            onPress={() => onChange(option.value)}
-            role="radio"
-            aria-checked={selected}
-            className={cn(
-              "h-9.5 flex-1 items-center justify-center rounded-[999px]",
-              selected && "bg-surface"
-            )}
-          >
-            <Text
-              className={cn("text-sm", selected ? "font-extrabold" : "font-semibold text-soft")}
-            >
-              {t(option.label)}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
   );
 }

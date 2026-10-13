@@ -25,6 +25,8 @@ export const settingSchemas = {
   theme: z.enum(THEME_MODES),
   deviceName: z.string().trim().min(1).max(DEVICE_NAME_MAX),
   productsView: z.enum(PRODUCTS_VIEWS),
+  /** Ordner für „Sichern“ (8c, nur Android): Tree-URI aus der Ordnerauswahl des Systems. */
+  backupDirectory: z.string().min(1).nullable(),
 };
 
 /** Lesen ist tolerant: fehlende oder ungültige Werte fallen auf den Standard zurück. */
@@ -32,6 +34,7 @@ const settingsReadSchema = z.object({
   theme: settingSchemas.theme.catch("system"),
   deviceName: settingSchemas.deviceName.catch(() => getDefaultDeviceName()),
   productsView: settingSchemas.productsView.catch("list"),
+  backupDirectory: settingSchemas.backupDirectory.catch(null),
 });
 
 export type Settings = z.infer<typeof settingsReadSchema>;

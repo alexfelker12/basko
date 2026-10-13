@@ -175,6 +175,51 @@ const de = {
   settings: {
     title: "Einstellungen",
     storeOrder: "Ladenreihenfolge",
+    deviceName: "Gerätename",
+    appearance: "Darstellung",
+    themes: {
+      light: "Hell",
+      system: "System",
+      dark: "Dunkel",
+    },
+    backup: "Daten & Sicherung",
+    about: "Über die App",
+    recipeSource: "Rezepte von API Ninjas",
+    version: "Version {version}",
+  },
+  deviceNameDialog: {
+    title: "Gerätename",
+    text: "So sehen dich andere Geräte beim Transfer.",
+    input: "Gerätename",
+    save: "Speichern",
+  },
+  backup: {
+    title: "Daten & Sicherung",
+    create: {
+      title: "Sichern",
+      /** iOS: Teilen-Menü */
+      text: "Alle Listen, Produkte und Bilder als Datei teilen",
+      /** Android: direkt in den gewählten Ordner */
+      textSave: "Alle Listen, Produkte und Bilder als Datei speichern",
+    },
+    restore: {
+      title: "Wiederherstellen",
+      text: "Sicherung aus Datei laden · ersetzt alle Daten",
+    },
+    location: {
+      title: "Speicherort",
+      unset: "Wird beim ersten Sichern gewählt",
+      root: "Oberste Ebene des Speichers",
+    },
+    created: "Sicherung erstellt",
+    savedTo: "Sicherung in „{folder}“ gespeichert",
+    restored: "Daten wiederhergestellt",
+    newerVersion: "Diese Sicherung stammt aus einer neueren Basko-Version.",
+    restoreDialog: {
+      title: "Daten ersetzen?",
+      text: "Alle Listen, Produkte und Bilder auf diesem Gerät werden durch die Sicherung vom {date} ersetzt. Das lässt sich nicht rückgängig machen.",
+      confirm: "Ersetzen",
+    },
   },
   storeOrder: {
     title: "Ladenreihenfolge",
