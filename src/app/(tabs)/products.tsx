@@ -1,6 +1,6 @@
 import { PackageIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, ScrollView, View } from "react-native";
+import { FlatList, Keyboard, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaFrame } from "react-native-safe-area-context";
 
 import { EmptyState } from "@/components/empty-state";
@@ -78,11 +78,24 @@ export default function ProductsScreen() {
     setPending(null);
   };
 
+  // Aktionen an einem Produkt schließen die Tastatur der Suche – sonst bliebe sie unter dem
+  // Aktionen-Sheet, der Vollbildansicht bzw. dem Bearbeiten-Sheet (ohne eigenen Fokus) offen
+  const openMenu = (product: CatalogProduct) => {
+    Keyboard.dismiss();
+    setMenuProduct(product);
+  };
+
   const itemProps = (match: CatalogMatch) => ({
     match,
-    onPress: () => setSheet({ kind: "edit", product: match.product }),
-    onImagePress: () => setViewerProduct(match.product),
-    onMorePress: () => setMenuProduct(match.product),
+    onPress: () => {
+      Keyboard.dismiss();
+      setSheet({ kind: "edit", product: match.product });
+    },
+    onImagePress: () => {
+      Keyboard.dismiss();
+      setViewerProduct(match.product);
+    },
+    onMorePress: () => openMenu(match.product),
   });
 
   // Leer-Inhalt ohne eigenen Seitenabstand: Die Liste (4a) hat keinen, das Raster (4b) trägt
@@ -154,7 +167,7 @@ export default function ProductsScreen() {
                   {...itemProps(item)}
                   onLongPress={() => {
                     hapticTap();
-                    setMenuProduct(item.product);
+                    openMenu(item.product);
                   }}
                 />
               ) : null}
