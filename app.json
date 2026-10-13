@@ -6,7 +6,13 @@
     "orientation": "portrait",
     "scheme": "basko",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/images/icon.png",
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "monochromeImage": "./assets/images/monochrome-icon.png",
+        "backgroundColor": "#3E5C46"
+      },
       "predictiveBackGestureEnabled": false,
       "package": "com.alexfelker.basko",
       "softwareKeyboardLayoutMode": "resize",
@@ -133,7 +139,8 @@
       "en": "./locales/en.json"
     },
     "web": {
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
