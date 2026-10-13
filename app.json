@@ -194,6 +194,16 @@
       ],
       "expo-localization",
       [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class com.balthazargronon.RCTZeroconf.** { *; }\n-keep class com.asterinet.react.tcpsocket.** { *; }"
+          }
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
