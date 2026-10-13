@@ -353,6 +353,9 @@ importers:
       babel-plugin-module-resolver:
         specifier: 5.0.0
         version: 5.0.0
+      babel-preset-expo:
+        specifier: ~57.0.13
+        version: 57.0.13(@babel/core@7.29.7(supports-color@8.1.1))(@babel/runtime@7.29.7)(expo@57.0.26)(react-refresh@0.14.2)(supports-color@8.1.1)
       drizzle-kit:
         specifier: ^0.31.11
         version: 0.31.11
