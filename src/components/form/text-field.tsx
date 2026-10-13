@@ -1,6 +1,7 @@
 import type { BlurEvent, FocusEvent, TextInputProps } from "react-native";
 
 import { Input, InputField } from "@/components/ui/input";
+import { useBlurOnKeyboardHide } from "@/hooks/use-keyboard";
 import { useSheetKeyboardHandlers } from "@/hooks/use-sheet-keyboard";
 import { useFieldContext } from "@/lib/form/form-context";
 import { cn } from "@gluestack-ui/utils/nativewind-utils";
@@ -26,6 +27,8 @@ type TextFieldProps = Pick<
   maxLines?: keyof typeof MAX_LINES_CLASS;
   /** Zusätzlich zur Tastatur-Anmeldung im Sheet, z. B. Feld in den sichtbaren Bereich scrollen. */
   onFocus?: () => void;
+  /** Eingefahrene Tastatur verlässt das Feld (`onBlur`) – Inline-Umbenennen (1d, 5a). */
+  blurOnKeyboardHide?: boolean;
   className?: string;
 };
 
@@ -39,9 +42,11 @@ export function TextFieldComponent({
   isDisabled = false,
   wrap = false,
   maxLines,
+  blurOnKeyboardHide = false,
   className,
   ...inputProps
 }: TextFieldProps) {
+  useBlurOnKeyboardHide(blurOnKeyboardHide);
   const field = useFieldContext<string>();
   const sheetKeyboard = useSheetKeyboardHandlers();
   const error = fieldError(field.state.meta);

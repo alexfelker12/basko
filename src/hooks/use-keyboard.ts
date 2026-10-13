@@ -15,6 +15,24 @@ export function useKeyboardHeight() {
   return useKeyboardContext().reanimated;
 }
 
+/**
+ * Verlässt das fokussierte Feld, sobald die Tastatur eingefahren ist. Android schließt die Tastatur
+ * per Zurück oder Wischgeste, ohne den Fokus zu nehmen – das Feld bliebe aktiv, und ein Tipp
+ * daneben bewirkt nichts mehr (eine Liste blendet nur bei offener Tastatur aus). Für Inline-Felder,
+ * bei denen Verlassen eine Aktion ist: Umbenennen verwerfen (1d, 5a), Zahl im Mengenregler übernehmen.
+ * `enabled` nur, solange so ein Feld aktiv ist – der Hook trifft das gerade fokussierte Feld.
+ */
+export function useBlurOnKeyboardHide(enabled: boolean) {
+  useEffect(() => {
+    if (!enabled) return;
+    const subscription = Keyboard.addListener("keyboardDidHide", () => {
+      const input = TextInput.State.currentlyFocusedInput();
+      if (input) TextInput.State.blurTextInput(input);
+    });
+    return () => subscription.remove();
+  }, [enabled]);
+}
+
 /** Abstand zwischen Eingabefeld und Tastatur beim Hochscrollen. */
 const FOCUSED_INPUT_MARGIN = 16;
 

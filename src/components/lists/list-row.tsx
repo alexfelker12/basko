@@ -80,7 +80,8 @@ interface ListRenameRowProps {
 
 /**
  * Inline-Umbenennen (1d): gespeichert wird nur mit Haken oder Enter.
- * Tastatur schließen, daneben tippen oder Zurück verwirft die Änderung.
+ * Tastatur schließen, daneben tippen oder Zurück verwirft die Änderung (eingefahrene Tastatur
+ * verlässt das Feld, siehe `useBlurOnKeyboardHide`).
  * Gleiche Höhe wie die normale Zeile (Feld und Haken 44), damit nichts springt.
  */
 export function ListRenameRow({ list, onSubmit, onCancel }: ListRenameRowProps) {
@@ -100,6 +101,7 @@ export function ListRenameRow({ list, onSubmit, onCancel }: ListRenameRowProps) 
             returnKeyType="done"
             onSubmitEditing={() => form.handleSubmit()}
             onBlur={onCancel}
+            blurOnKeyboardHide
             accessibilityLabel={t("lists.nameInput")}
             className="flex-1"
             size="sm"
