@@ -1,5 +1,5 @@
 import { PackageIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { FlatList, Keyboard, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaFrame } from "react-native-safe-area-context";
 
@@ -28,6 +28,11 @@ import type { CatalogProduct } from "@/lib/queries/products";
 import { cn } from "@gluestack-ui/utils/nativewind-utils";
 
 const GRID_COLUMNS = 3;
+/**
+ * Gerenderter Bereich in Bildschirmhöhen (Standard 21): Bei großem Katalog bleiben so weniger Zeilen
+ * samt Vorschaubildern eingehängt, gescrollt wird trotzdem ohne Lücken.
+ */
+const LIST_WINDOW_SIZE = 11;
 
 /** Was nach dem Schließen des Aktionen-Sheets (4f) passieren soll – nie zwei Sheets gleichzeitig. */
 type PendingAction = { kind: "edit" | "delete"; product: CatalogProduct } | null;
@@ -53,11 +58,13 @@ export default function ProductsScreen() {
 
   // Eine inzwischen gelöschte Kategorie filtert nicht mehr
   const activeFilterId = categories.some((category) => category.id === filterId) ? filterId : null;
+  // Tippen bleibt flüssig: Filtern und Neuaufbau der Liste laufen nachrangig mit dem letzten Stand
+  const deferredQuery = useDeferredValue(query);
   const matches = useMemo(
-    () => filterCatalog(catalog, query, activeFilterId),
-    [catalog, query, activeFilterId]
+    () => filterCatalog(catalog, deferredQuery, activeFilterId),
+    [catalog, deferredQuery, activeFilterId]
   );
-  const trimmed = query.trim();
+  const trimmed = deferredQuery.trim();
   const catalogEmpty = !isPending && catalog.length === 0;
 
   // Die Suchleiste sitzt über der Tab-Leiste: mit Tastatur nur um den Rest anheben
@@ -155,6 +162,7 @@ export default function ProductsScreen() {
           data={padToColumns(matches)}
           numColumns={GRID_COLUMNS}
           keyExtractor={(match, index) => match?.product.id ?? `empty:${index}`}
+          windowSize={LIST_WINDOW_SIZE}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           contentContainerClassName="gap-4 px-page pb-40 pt-1.5"
@@ -179,6 +187,7 @@ export default function ProductsScreen() {
           key="list"
           data={matches}
           keyExtractor={(match) => match.product.id}
+          windowSize={LIST_WINDOW_SIZE}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           contentContainerClassName="pb-40"
