@@ -152,12 +152,14 @@ const ZoomableImage = React.memo(
     const opacity = useSharedValue(1);
 
     // Notify parent when zoom changes
+    // Basko: `scale.get()` stand in den Abhängigkeiten – ein Lesen während des Renderns (Reanimated
+    // warnt) ohne Wirkung, Zoom-Änderungen meldet die Pinch-Geste selbst über `onZoomChange`
     useEffect(() => {
       const isZoomed = scale.get() > 1;
       if (index === currentIndex && onZoomChange) {
         onZoomChange(isZoomed);
       }
-    }, [scale.get(), index, currentIndex, onZoomChange]);
+    }, [scale, index, currentIndex, onZoomChange]);
 
     // Expose reset method to parent
     React.useImperativeHandle(ref, () => ({
