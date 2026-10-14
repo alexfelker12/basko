@@ -13,7 +13,9 @@ import { useCatalog } from "@/hooks/use-catalog";
 import { useSheetKeyboardHandlers } from "@/hooks/use-sheet-keyboard";
 import { PRODUCT_NAME_MAX } from "@/lib/db/schema";
 import { t } from "@/lib/i18n";
+import { isNameTaken } from "@/lib/names";
 import { searchProducts, type ProductSearchResult } from "@/lib/product-search";
+import { cn } from "@gluestack-ui/utils/nativewind-utils";
 
 interface ProductSearchProps {
   query: string;
@@ -26,7 +28,9 @@ interface ProductSearchProps {
 
 /**
  * Inhalt des Such-Sheets (3c/3d): Eingabe oben mit Fokus, Treffer mit Name, Kategorie und Hinweisen.
- * Ohne Treffer: „‚{Suchtext}‘ neu anlegen“. Die Suche ist eine Live-Filterung, kein Formular.
+ * „‚{Suchtext}‘ neu anlegen“ steht immer als letzte Zeile, auch mit Treffern („Käse“ findet
+ * „Frischkäse“ und soll trotzdem anlegbar sein) – außer ein Treffer heißt genau so. Ohne Treffer
+ * steht darüber „Kein Produkt gefunden.“ Die Suche ist eine Live-Filterung, kein Formular.
  */
 export function ProductSearch({
   query,
@@ -44,6 +48,9 @@ export function ProductSearch({
     [catalog, deferredQuery, itemIdsByProduct]
   );
   const trimmed = deferredQuery.trim();
+  // Ein gleichnamiges Produkt wäre ein Treffer (Teilwort) – die Treffer reichen für die Prüfung
+  const canCreate =
+    trimmed !== "" && !isNameTaken(trimmed, results.map((result) => result.product.name));
 
   return (
     <View className="flex-1">
@@ -75,13 +82,18 @@ export function ProductSearch({
         renderItem={({ item }) => <ResultRow result={item} onPress={() => onSelect(item)} />}
         ListFooterComponent={
           <>
-            {trimmed && results.length === 0 ? (
-              <View className="px-page pt-4">
-                <Text className="text-xs text-soft">{t("search.noResult")}</Text>
+            {canCreate ? (
+              <View className={cn("px-page", results.length === 0 && "pt-4")}>
+                {results.length === 0 ? (
+                  <Text className="text-xs text-soft">{t("search.noResult")}</Text>
+                ) : null}
                 <Pressable
                   onPress={() => onCreate(trimmed)}
                   role="button"
-                  className="mt-1.5 flex-row items-center gap-3 border-b border-line py-3 active:opacity-70"
+                  className={cn(
+                    "flex-row items-center gap-3 border-b border-line py-3 active:opacity-70",
+                    results.length === 0 && "mt-1.5"
+                  )}
                 >
                   <View className="size-8 items-center justify-center rounded-[999px] bg-chip">
                     <Icon as={PlusIcon} size="md" className="text-ink" />
