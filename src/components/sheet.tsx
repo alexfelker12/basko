@@ -1,6 +1,6 @@
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import { useEffect, useRef, type ReactNode } from "react";
-import { BackHandler } from "react-native";
+import { AppState, BackHandler, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
@@ -14,6 +14,8 @@ import { cn } from "@gluestack-ui/utils/nativewind-utils";
 
 /** Hohe Sheets (Suche 3c) belegen 90 % der Höhe, alle anderen passen sich dem Inhalt an. */
 const FULL_HEIGHT_SNAP_POINTS = ["90%"];
+/** Nach der Rückkehr in die App: warten, bis Android Fenster und Inhalt neu vermessen hat. */
+const RESUME_SETTLE_MS = 300;
 
 function SheetBackdrop(props: BottomSheetBackdropProps) {
   return <BottomSheetBackdrop {...props} />;
@@ -81,6 +83,26 @@ export function Sheet({
       return true;
     });
     return () => subscription.remove();
+  }, [isOpen]);
+
+  // Android: Nach Kamera oder Galerie (eigene Activity) blieb das Sheet manchmal unten liegen –
+  // nur Griff und Abdunklung sichtbar, bis man am Griff zieht. Vermutlich vermisst gorhom die
+  // Höhe beim Zurückkehren neu, bewegt das Sheet aber nicht mit. Daher einmal neu einrasten.
+  // Bei offener Tastatur nicht: Dort steht das Sheet absichtlich höher.
+  useEffect(() => {
+    if (!isOpen) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const subscription = AppState.addEventListener("change", (state) => {
+      clearTimeout(timer);
+      if (state !== "active") return;
+      timer = setTimeout(() => {
+        if (isOpenRef.current && !Keyboard.isVisible()) ref.current?.snapToIndex(0);
+      }, RESUME_SETTLE_MS);
+    });
+    return () => {
+      clearTimeout(timer);
+      subscription.remove();
+    };
   }, [isOpen]);
 
   const handleClosed = () => {
