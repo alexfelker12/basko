@@ -11,7 +11,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "monochromeImage": "./assets/images/monochrome-icon.png",
-        "backgroundColor": "#3E5C46"
+        "backgroundColor": "#4A6E53"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.alexfelker.basko",
