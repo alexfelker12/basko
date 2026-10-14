@@ -18,6 +18,8 @@ module.exports = function (api) {
       ],
       // Drizzle-Migrationen (.sql) werden beim Bündeln als Text eingebettet
       ['inline-import', { extensions: ['.sql'] }],
+      // lucide-Icons einzeln importieren, statt alle ~1.900 ins Bundle zu laden
+      './babel/lucide-imports.js',
       'react-native-worklets/plugin',
     ],
   };

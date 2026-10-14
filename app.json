@@ -11,7 +11,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "monochromeImage": "./assets/images/monochrome-icon.png",
-        "backgroundColor": "#3E5C46"
+        "backgroundColor": "#658A6F"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.alexfelker.basko",
@@ -81,6 +81,11 @@
       ]
     },
     "ios": {
+      "icon": {
+        "light": "./assets/images/icon.png",
+        "dark": "./assets/images/icon-ios-dark.png",
+        "tinted": "./assets/images/icon-ios-tinted.png"
+      },
       "supportsTablet": true,
       "infoPlist": {
         "CFBundleDocumentTypes": [
@@ -193,6 +198,16 @@
         }
       ],
       "expo-localization",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class com.balthazargronon.RCTZeroconf.** { *; }\n-keep class com.asterinet.react.tcpsocket.** { *; }"
+          }
+        }
+      ],
       [
         "expo-splash-screen",
         {
