@@ -11,7 +11,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "monochromeImage": "./assets/images/monochrome-icon.png",
-        "backgroundColor": "#4A6E53"
+        "backgroundColor": "#658A6F"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.alexfelker.basko",
@@ -81,6 +81,11 @@
       ]
     },
     "ios": {
+      "icon": {
+        "light": "./assets/images/icon.png",
+        "dark": "./assets/images/icon-ios-dark.png",
+        "tinted": "./assets/images/icon-ios-tinted.png"
+      },
       "supportsTablet": true,
       "infoPlist": {
         "CFBundleDocumentTypes": [

@@ -136,6 +136,7 @@ pnpm db:generate                 # Drizzle-Migration aus dem Schema erzeugen (sr
 - Texte immer mit `Text` aus `@/components/ui/text` (Manrope, Standard 500). Manrope ist nativ eingebunden (expo-font-Plugin in `app.json`), Gewichte über `font-medium` … `font-extrabold`.
 - Units werden als Code gespeichert (`pcs`, `kg`, …) und über `t("units.<code>")` angezeigt.
 - Schrift Manrope 500–800; Icons `lucide-react-native` (nächstliegendes Icon).
+- **App-Icon:** Korb mit Haken in `#EFF3EC` auf `#658A6F` – die wahrnehmungsgleiche Mitte (OKLab) zwischen `primary` hell `#3E5C46` und dunkel `#8FBB9B`, weil das Icon in beiden Modi gleich bleibt. Android: Adaptive Icon plus einfarbiges Icon für die Designsymbole (Android 13+, folgen dem Thema). iOS 18+: `ios.icon` mit `light`, `dark` (Korb in `#8FBB9B` auf transparentem Grund, iOS legt den dunklen Hintergrund darunter) und `tinted` (Graustufen, weiß auf Schwarz). Der Haken ist jeweils ausgespart.
 - Maße: Radius 14 / 999 / 10, Seitenabstand 18, Touch-Fläche min. 44.
 - IDs: UUID als Text (`expo-crypto`).
 - Zahlen im Format der Sprache anzeigen (Deutsch „1,5“, Englisch „1.5“); Eingabe akzeptiert Komma und Punkt.
