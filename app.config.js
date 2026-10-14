@@ -6,16 +6,17 @@
  * Architektur ausliefert; Entwicklung bleibt bei allen (Emulatoren laufen auf x86_64).
  */
 module.exports = ({ config }) => {
-  if (process.env.EAS_BUILD_PROFILE !== 'preview') return config;
+  // if (process.env.EAS_BUILD_PROFILE !== 'preview') return config;
+  if (process.env.EAS_BUILD_PROFILE !== 'production') return config;
 
   return {
     ...config,
     plugins: config.plugins.map((plugin) =>
       Array.isArray(plugin) && plugin[0] === 'expo-build-properties'
         ? [
-            plugin[0],
-            { ...plugin[1], android: { ...plugin[1].android, buildArchs: ['arm64-v8a'] } },
-          ]
+          plugin[0],
+          { ...plugin[1], android: { ...plugin[1].android, buildArchs: ['arm64-v8a'] } },
+        ]
         : plugin
     ),
   };
