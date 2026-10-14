@@ -143,7 +143,7 @@ const en = {
     newTitle: "New product",
     editTitle: "Edit product",
     name: "Name",
-    nameTaken: "This product already exists",
+    nameTaken: "A product with this name already exists.",
     category: "Category",
     chooseCategory: "Choose category, currently {name}",
     photos: "Photos",
@@ -165,7 +165,7 @@ const en = {
   categoryForm: {
     newTitle: "New category",
     name: "Name",
-    nameTaken: "This category already exists",
+    nameTaken: "A category with this name already exists.",
   },
   imageViewer: {
     close: "Close",
@@ -392,6 +392,24 @@ const en = {
     select: "Include {name}",
     known: "already exists",
     new: "new product",
+  },
+  validation: {
+    required: "Please fill this in.",
+    tooLong: { one: "Use at most {count} character.", other: "Use at most {count} characters." },
+    invalid: "This entry isn’t valid.",
+    listName: "Give the list a name.",
+    productName: "Give the product a name.",
+    categoryName: "Give the category a name.",
+    deviceName: "Give your device a name.",
+    category: "Choose a category.",
+    color: "Choose a colour.",
+    unit: "Choose a unit.",
+    quantity: "The quantity must be greater than 0.",
+    quantityDecimals: "Use at most two decimal places.",
+    tooManyPhotos: {
+      one: "You can add up to {count} photo.",
+      other: "You can add up to {count} photos.",
+    },
   },
   errors: {
     generic: "Something went wrong",
