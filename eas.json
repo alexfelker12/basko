@@ -18,13 +18,14 @@
     "production": {
       "autoIncrement": true,
       "environment": "production",
-      "node": "22.13.0",
-      "android": {
-        "buildType": "apk"
-      }
+      "node": "22.13.0"
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "track": "internal"
+      }
+    }
   }
 }

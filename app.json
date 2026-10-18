@@ -81,6 +81,10 @@
       ]
     },
     "ios": {
+      "bundleIdentifier": "com.alexfelker.basko",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "icon": {
         "light": "./assets/images/icon.png",
         "dark": "./assets/images/icon-ios-dark.png",

@@ -6,8 +6,7 @@
  * Architektur ausliefert; Entwicklung bleibt bei allen (Emulatoren laufen auf x86_64).
  */
 module.exports = ({ config }) => {
-  // if (process.env.EAS_BUILD_PROFILE !== 'preview') return config;
-  if (process.env.EAS_BUILD_PROFILE !== 'production') return config;
+  if (process.env.EAS_BUILD_PROFILE !== 'preview') return config;
 
   return {
     ...config,
