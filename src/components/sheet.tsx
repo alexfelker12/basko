@@ -68,8 +68,13 @@ export function Sheet({
   });
 
   useEffect(() => {
-    if (isOpen) ref.current?.open();
-    else ref.current?.close();
+    if (isOpen) {
+      // Ein neues Sheet verdeckt das Feld darunter (z. B. Name → „Kategorie“ 4e, Notiz → „Weitere
+      // Einheiten“) – die Tastatur gehört zu diesem Feld und schließt deshalb. Felder im neuen Sheet
+      // mit `autoFocus` hängen sich erst danach ein und öffnen sie wieder.
+      Keyboard.dismiss();
+      ref.current?.open();
+    } else ref.current?.close();
   }, [isOpen]);
 
   // Android-Zurück schließt nur dieses Sheet (wie Wischen) bzw. geht mit `onBack` einen Schritt
