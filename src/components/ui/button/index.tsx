@@ -9,7 +9,9 @@ import {
 } from '@gluestack-ui/utils/nativewind-utils';
 import { styled } from 'nativewind';
 import React from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+
+import { Spinner } from '@/components/ui/spinner';
 const SCOPE = 'BUTTON';
 const Root = withStyleContext(Pressable, SCOPE);
 const StyledUIIcon = styled(UIIcon, {
@@ -19,7 +21,8 @@ const UIButton = createButton({
   Root: Root,
   Text,
   Group: View,
-  Spinner: ActivityIndicator,
+  // Basko: unser Spinner, damit `className="text-…"` die Farbe setzt
+  Spinner,
   Icon: StyledUIIcon,
 });
 // Basko: Button primary / secondary / destructive (Höhe 44, Radius 999),

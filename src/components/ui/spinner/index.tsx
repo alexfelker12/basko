@@ -5,9 +5,11 @@ import { tva } from '@gluestack-ui/utils/nativewind-utils';
 import { styled } from 'nativewind';
 
 
+// Basko: `nativeStyleMapping` statt `nativeStyleToProp` aus der Vorlage – react-native-css 3 liest
+// zur Laufzeit nur noch `nativeStyleMapping`, sonst kam `text-primary` nie als `color` an und
+// Android zeigte die Systemfarbe (türkis). Wie `ActivityIndicator` aus react-native-css selbst.
 const StyledActivityIndicator = styled(ActivityIndicator, {
-  // @ts-expect-error -- react-native-css 3.0.x typt nativeStyleToProp bei StyleProp-Unions als undefined; zur Laufzeit korrekt (Upstream-Template)
-  className: { target: 'style', nativeStyleToProp: { color: true } },
+  className: { target: 'style', nativeStyleMapping: { color: 'color' } },
 });
 const spinnerStyle = tva({});
 
@@ -17,7 +19,6 @@ const Spinner = React.forwardRef<
 >(function Spinner(
   {
     className,
-    color,
     focusable = false,
     'aria-label': ariaLabel = 'loading',
     ...props
@@ -29,8 +30,8 @@ const Spinner = React.forwardRef<
       ref={ref}
       focusable={focusable}
       aria-label={ariaLabel}
+      // `color` nur über `props`: ein explizites `color={undefined}` überschriebe die Klassenfarbe
       {...props}
-      color={color}
       className={spinnerStyle({ class: className })}
     />
   );
