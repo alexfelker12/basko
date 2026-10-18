@@ -70,30 +70,33 @@ export default function BackupScreen() {
       {/* Hintergrundmuster (Punktraster) hinter dem Inhalt */}
       <ScreenPattern />
       <StackHeader title={t("backup.title")} />
-      <View className="mx-page border-t border-line">
-        <SettingsRow
-          icon={UploadIcon}
-          title={t("backup.create.title")}
-          subtitle={SAVES_TO_FOLDER ? t("backup.create.textSave") : t("backup.create.text")}
-          onPress={create}
-          busy={exportBackup.isPending}
-        />
-        <SettingsRow
-          icon={DownloadIcon}
-          title={t("backup.restore.title")}
-          subtitle={t("backup.restore.text")}
-          onPress={restore}
-          busy={pickBackup.isPending}
-        />
-        {SAVES_TO_FOLDER ? (
+      {/* Deckend über die volle Breite: Das Punktraster füllt nur leere Flächen */}
+      <View className="bg-bg">
+        <View className="mx-page border-t border-line">
           <SettingsRow
-            icon={FolderIcon}
-            title={t("backup.location.title")}
-            subtitle={location}
-            onPress={chooseLocation}
-            busy={chooseDirectory.isPending}
+            icon={UploadIcon}
+            title={t("backup.create.title")}
+            subtitle={SAVES_TO_FOLDER ? t("backup.create.textSave") : t("backup.create.text")}
+            onPress={create}
+            busy={exportBackup.isPending}
           />
-        ) : null}
+          <SettingsRow
+            icon={DownloadIcon}
+            title={t("backup.restore.title")}
+            subtitle={t("backup.restore.text")}
+            onPress={restore}
+            busy={pickBackup.isPending}
+          />
+          {SAVES_TO_FOLDER ? (
+            <SettingsRow
+              icon={FolderIcon}
+              title={t("backup.location.title")}
+              subtitle={location}
+              onPress={chooseLocation}
+              busy={chooseDirectory.isPending}
+            />
+          ) : null}
+        </View>
       </View>
     </View>
   );

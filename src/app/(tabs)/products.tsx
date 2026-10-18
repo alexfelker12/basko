@@ -105,8 +105,8 @@ export default function ProductsScreen() {
     onMorePress: () => openMenu(match.product),
   });
 
-  // Leer-Inhalt ohne eigenen Seitenabstand: Die Liste (4a) hat keinen, das Raster (4b) trägt
-  // `px-page` schon am Inhalt – so sitzt „neu anlegen“ in beiden Ansichten gleich.
+  // Leer-Inhalt ohne eigenen Seitenabstand – den setzt der Rahmen darum, in beiden Ansichten gleich.
+  // „neu anlegen“ ist eine Zeile und deckt das Punktraster ab, der Hinweis ohne Treffer nicht.
   const noResults = trimmed ? (
     <Pressable
       onPress={() => setSheet({ kind: "create", name: trimmed })}
@@ -165,9 +165,14 @@ export default function ProductsScreen() {
           windowSize={LIST_WINDOW_SIZE}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          contentContainerClassName="gap-4 px-page pb-40 pt-1.5"
-          columnWrapperClassName="gap-3"
-          ListEmptyComponent={isPending ? null : <View className="pt-2.5">{noResults}</View>}
+          contentContainerClassName="pb-40 pt-1.5"
+          // Reihen deckend über die volle Breite samt Abständen – das Punktraster füllt nur leere Flächen
+          columnWrapperClassName="gap-3 bg-bg px-page pb-4"
+          ListEmptyComponent={
+            isPending ? null : (
+              <View className={cn("px-page pt-2.5", trimmed && "bg-bg")}>{noResults}</View>
+            )
+          }
           renderItem={({ item }) => (
             <View className="flex-1">
               {item ? (
@@ -191,7 +196,11 @@ export default function ProductsScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           contentContainerClassName="pb-40"
-          ListEmptyComponent={isPending ? null : <View className="px-page pt-4">{noResults}</View>}
+          ListEmptyComponent={
+            isPending ? null : (
+              <View className={cn("px-page pt-4", trimmed && "bg-bg")}>{noResults}</View>
+            )
+          }
           renderItem={({ item }) => <ProductRow {...itemProps(item)} />}
         />
       )}

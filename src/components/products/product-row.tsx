@@ -47,26 +47,29 @@ export function ProductRow({ match, onPress, onImagePress, onMorePress }: Produc
   const { product } = match;
 
   return (
-    <Pressable
-      onPress={onPress}
-      className="mx-page flex-row items-center gap-3.5 border-b border-line py-row active:opacity-70"
-    >
-      <Thumbnail match={match} onImagePress={onImagePress} size="md" />
-      <View className="min-w-0 flex-1">
-        <HighlightedText parts={match.parts} className="text-base font-bold" />
-        <Text numberOfLines={1} className="mt-0.5 text-xs text-soft">
-          {product.categoryName}
-        </Text>
-      </View>
+    // Deckend über die volle Breite: Das Punktraster füllt nur leere Flächen (wie Wisch-Zeilen)
+    <View className="bg-bg">
       <Pressable
-        onPress={onMorePress}
-        role="button"
-        aria-label={t("products.actions", { name: product.name })}
-        className="-mr-2.5 size-11 items-center justify-center"
+        onPress={onPress}
+        className="mx-page flex-row items-center gap-3.5 border-b border-line py-row active:opacity-70"
       >
-        <Icon as={EllipsisIcon} size="lg" className="text-soft" />
+        <Thumbnail match={match} onImagePress={onImagePress} size="md" />
+        <View className="min-w-0 flex-1">
+          <HighlightedText parts={match.parts} className="text-base font-bold" />
+          <Text numberOfLines={1} className="mt-0.5 text-xs text-soft">
+            {product.categoryName}
+          </Text>
+        </View>
+        <Pressable
+          onPress={onMorePress}
+          role="button"
+          aria-label={t("products.actions", { name: product.name })}
+          className="-mr-2.5 size-11 items-center justify-center"
+        >
+          <Icon as={EllipsisIcon} size="lg" className="text-soft" />
+        </Pressable>
       </Pressable>
-    </Pressable>
+    </View>
   );
 }
 

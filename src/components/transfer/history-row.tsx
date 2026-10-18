@@ -34,24 +34,29 @@ export function HistoryRow({ entry, onPress }: { entry: HistoryEntry; onPress: (
   });
 
   return (
-    <Pressable
-      onPress={onPress}
-      className="mx-page flex-row items-center gap-3.5 border-b border-line py-row active:opacity-70"
-    >
-      <View
-        className="size-9 items-center justify-center rounded-[999px] bg-chip"
-        aria-label={t(incoming ? "transfer.historyDirection.in" : "transfer.historyDirection.out")}
+    // Deckend über die volle Breite: Das Punktraster füllt nur leere Flächen
+    <View className="bg-bg">
+      <Pressable
+        onPress={onPress}
+        className="mx-page flex-row items-center gap-3.5 border-b border-line py-row active:opacity-70"
       >
-        <Icon as={incoming ? ArrowDownIcon : ArrowUpIcon} className="h-4.5 w-4.5 text-soft" />
-      </View>
-      <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="text-base font-bold">
-          {entry.listName}
-        </Text>
-        <Text numberOfLines={1} className="mt-0.5 text-xs text-soft">
-          {detail}
-        </Text>
-      </View>
-    </Pressable>
+        <View
+          className="size-9 items-center justify-center rounded-[999px] bg-chip"
+          aria-label={t(
+            incoming ? "transfer.historyDirection.in" : "transfer.historyDirection.out"
+          )}
+        >
+          <Icon as={incoming ? ArrowDownIcon : ArrowUpIcon} className="h-4.5 w-4.5 text-soft" />
+        </View>
+        <View className="min-w-0 flex-1">
+          <Text numberOfLines={1} className="text-base font-bold">
+            {entry.listName}
+          </Text>
+          <Text numberOfLines={1} className="mt-0.5 text-xs text-soft">
+            {detail}
+          </Text>
+        </View>
+      </Pressable>
+    </View>
   );
 }

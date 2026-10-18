@@ -60,7 +60,7 @@ export default function TransferScreen() {
 
         {history.length > 0 ? (
           <>
-            <View className="mt-5 flex-row items-center justify-between pl-page pr-2">
+            <View className="mt-5 flex-row items-center justify-between bg-bg pl-page pr-2">
               <Text className="text-xs font-extrabold uppercase tracking-widest text-primary">
                 {t("transfer.history")}
               </Text>
