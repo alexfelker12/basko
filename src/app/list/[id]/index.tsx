@@ -6,6 +6,7 @@ import { View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { FadeIn, FadeOut, LinearTransition } from "react-native-reanimated";
 
+import { createAnimatedStickyHeader } from "@/components/animated-sticky-header";
 import { EmptyState } from "@/components/empty-state";
 import { ProductPhotoViewer } from "@/components/image-viewer";
 import { ItemForm } from "@/components/items/item-form";
@@ -39,7 +40,14 @@ import {
   type ListItemRow,
 } from "@/lib/queries/list-items";
 
-const ROW_TRANSITION = LinearTransition.duration(220);
+const ROW_DURATION = 220;
+const ROW_TRANSITION = LinearTransition.duration(ROW_DURATION);
+/** Kategorie-Überschriften gleiten, blenden ein und aus wie die Zeilen. */
+const StickyHeader = createAnimatedStickyHeader({
+  duration: ROW_DURATION,
+  entering: FadeIn,
+  exiting: FadeOut,
+});
 
 const isComplete = (group: CategoryGroup) => group.checkedCount === group.items.length;
 
@@ -176,7 +184,11 @@ export default function ShopScreen() {
           </Button>
         </EmptyState>
       ) : (
-        <ScrollView stickyHeaderIndices={stickyIndices} contentContainerClassName="pb-safe">
+        <ScrollView
+          stickyHeaderIndices={stickyIndices}
+          StickyHeaderComponent={StickyHeader}
+          contentContainerClassName="pb-safe"
+        >
           {children}
           {allDone ? (
             <StyledAnimatedView key="all-done" entering={FadeIn} className="px-page pb-6 pt-6">

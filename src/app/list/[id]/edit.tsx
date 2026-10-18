@@ -5,6 +5,7 @@ import { Pressable, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { LinearTransition } from "react-native-reanimated";
 
+import { createAnimatedStickyHeader } from "@/components/animated-sticky-header";
 import { EmptyState } from "@/components/empty-state";
 import { KeyboardSpacer } from "@/components/keyboard-spacer";
 import { KeyboardSticky } from "@/components/keyboard-sticky";
@@ -32,6 +33,11 @@ import {
   type ListItemRow,
 } from "@/lib/queries/list-items";
 import { cn } from "@gluestack-ui/utils/nativewind-utils";
+
+const ROW_DURATION = 200;
+const ROW_TRANSITION = LinearTransition.duration(ROW_DURATION);
+/** Kategorie-Überschriften gleiten wie die Zeilen (Löschen, Hinzufügen, Umsortieren). */
+const StickyHeader = createAnimatedStickyHeader({ duration: ROW_DURATION });
 
 /** Liste bearbeiten (3a–3g). Jede Änderung wird sofort gespeichert. */
 export default function EditListScreen() {
@@ -99,12 +105,13 @@ export default function EditListScreen() {
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
           stickyHeaderIndices={stickyHeaderIndices(groups)}
+          StickyHeaderComponent={StickyHeader}
           contentContainerClassName="pb-6"
         >
           {groups.flatMap((group) => [
             <SectionHeader key={`header:${group.categoryId}`} title={group.categoryName} />,
             ...group.items.map((item) => (
-              <StyledAnimatedView key={item.id} layout={LinearTransition.duration(200)}>
+              <StyledAnimatedView key={item.id} layout={ROW_TRANSITION}>
                 <SwipeRow
                   label={t("common.delete")}
                   icon={Trash2Icon}
