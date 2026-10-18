@@ -19,7 +19,7 @@ interface SettingsRowProps {
   onPress?: () => void;
   /** Läuft gerade (z. B. Sichern): Spinner statt ›, Tippen wirkt nicht. */
   busy?: boolean;
-  /** Steuerelement rechts statt Wert, z. B. der Umschalter Hell / System / Dunkel. */
+  /** Steuerelement rechts statt Wert. */
   children?: ReactNode;
 }
 
